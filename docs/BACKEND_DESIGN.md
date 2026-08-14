@@ -7,7 +7,7 @@ Stack: Express.js + TypeScript, PostgreSQL + Prisma ORM, JWT, Zod, Chapa (paymen
 
 ## 1. Guiding Principles
 
-- Strict layering: **routes → middlewares → controllers → services → Prisma (models)**. Controllers never touch Prisma directly.
+- Strict layering: **routes → middlewares → controllers → services → Prisma**. Controllers never touch Prisma directly.
 - Every mutation is validated (Zod) before it reaches a service.
 - Every route is authorized (JWT + RBAC middleware) before it reaches a controller.
 - Uploaded files/assets are never stored as DB blobs — stored in object storage, DB holds references only.
@@ -76,9 +76,7 @@ driving-platform-backend/
 │   ├── services/                     # business logic, orchestrates Prisma + other services
 │   │   └── (mirrors routes/, e.g. classrooms.service.ts)
 │   │
-│   ├── models/                       # Prisma-adjacent helpers: repository-style query builders per entity
-│   │   └── (e.g. classroom.repository.ts — wraps prisma.classroom.* with common includes)
-│   │
+
 │   ├── validators/                   # Zod schemas per resource (createX, updateX, queryX)
 │   │   └── (e.g. classroom.schema.ts)
 │   │
@@ -117,8 +115,7 @@ driving-platform-backend/
 | **routes** | Declare path + method + middleware chain (`authenticate → authorize → validate → controller`). No logic. |
 | **middlewares** | Cross-cutting concerns: auth, RBAC, validation, error normalization, security headers, rate limiting. |
 | **controllers** | Extract `req.params/query/body/user`, call exactly one service method, shape the HTTP response via `apiResponse`. No business logic, no Prisma calls. |
-| **services** | All business rules: priority-based schedule overrides, price recommendation, agreement fee splitting, notification fan-out, commission calculation. Call `models/` repositories, never `prisma` directly (keeps swapping ORM/testing easy). |
-| **models** | Thin repository wrappers around `prisma.<entity>` with the standard `include`/`select` shapes reused across services. |
+| **services** | All business rules: priority-based schedule overrides, price recommendation, agreement fee splitting, notification fan-out, commission calculation. Call `prisma` directly. |
 | **validators** | Zod schemas — one per input shape; reused by `validate` middleware and shared conceptually with frontend Zod schemas. |
 
 ---

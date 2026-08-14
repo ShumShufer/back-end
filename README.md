@@ -6,7 +6,7 @@ The Driving School Platform is designed to modernize and streamline the operatio
 ## Project Architecture
 The backend is built using a strict layered architecture:
 - **Stack**: Express.js, TypeScript, PostgreSQL, Prisma ORM, Zod, JWT
-- **Layering Principle**: `Routes → Middlewares → Controllers → Services → Models (Prisma)`
+- **Layering Principle**: `Routes → Middlewares → Controllers → Services (Prisma)`
 - **Core Features**: Role-Based Access Control (RBAC), JWT authentication, input validation via Zod, and centralized error handling.
 
 ## How to Set Up and Run
