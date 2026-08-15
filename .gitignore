@@ -24,4 +24,11 @@ dist-ssr
 *.sw?
 
 .env
+generated/
 /generated/prisma
+
+.agents/
+.agent/
+.claude/
+.cursor/
+.windsurf/
