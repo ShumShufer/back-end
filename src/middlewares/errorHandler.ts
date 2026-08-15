@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import { logger } from "../config/logger";
+import type { NextFunction, Request, Response } from "express";
+import { logger } from "../config/logger.js";
 
 export const errorHandler = (
   error: Error,
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ): void => {
