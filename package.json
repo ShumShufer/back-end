@@ -7,7 +7,10 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +25,9 @@
   },
   "homepage": "https://github.com/ShumShufer/back-end#readme",
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^26.2.0",
     "@types/pg": "^8.21.0",
     "prisma": "^7.9.1",
@@ -32,8 +37,11 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
     "pg": "^8.23.0",
     "zod": "^4.4.3"
   }
