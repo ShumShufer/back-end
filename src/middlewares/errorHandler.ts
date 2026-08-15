@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { logger } from "../config/logger.js";
 
-export const errorHandler = (
+export function errorHandler(
   error: Error,
   _req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): void {
   logger.error(error.message);
 
   if (res.headersSent) {
@@ -24,4 +24,4 @@ export const errorHandler = (
           : error.message,
     },
   });
-};
+}
