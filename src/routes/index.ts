@@ -1,7 +1,16 @@
-import { Router } from 'express';
+import { Router } from "express";
+import authRoutes from "./auth.routes.js";
 
 const router = Router();
 
-// Define your routes here
+/**
+ * API Routes
+ */
+router.use("/auth", authRoutes);
+
+// Add more routes here as they are created
+// router.use("/users", usersRoutes);
+// router.use("/schools", schoolsRoutes);
+// etc.
 
 export default router;
