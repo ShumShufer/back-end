@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes.js";
+import usersRoutes from "./users.routes.js";
 
 const router = Router();
 
@@ -7,10 +8,6 @@ const router = Router();
  * API Routes
  */
 router.use("/auth", authRoutes);
-
-// Add more routes here as they are created
-// router.use("/users", usersRoutes);
-// router.use("/schools", schoolsRoutes);
-// etc.
+router.use("/users", usersRoutes);
 
 export default router;
