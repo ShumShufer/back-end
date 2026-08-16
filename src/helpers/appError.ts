@@ -30,19 +30,19 @@ export class AppError extends Error {
     return new AppError(message, 400, code, details);
   }
 
-  static unauthorized(message = "Unauthorized access", code = "UNAUTHORIZED"): AppError {
-    return new AppError(message, 401, code);
+  static unauthorized(message = "Unauthorized access", code = "UNAUTHORIZED", details?: unknown): AppError {
+    return new AppError(message, 401, code, details);
   }
 
-  static forbidden(message = "You do not have permission to perform this action", code = "FORBIDDEN"): AppError {
-    return new AppError(message, 403, code);
+  static forbidden(message = "You do not have permission to perform this action", code = "FORBIDDEN", details?: unknown): AppError {
+    return new AppError(message, 403, code, details);
   }
 
-  static notFound(message = "Resource not found", code = "NOT_FOUND"): AppError {
-    return new AppError(message, 404, code);
+  static notFound(message = "Resource not found", code = "NOT_FOUND", details?: unknown): AppError {
+    return new AppError(message, 404, code, details);
   }
 
-  static conflict(message = "Resource already exists", code = "CONFLICT"): AppError {
-    return new AppError(message, 409, code);
+  static conflict(message = "Resource already exists", code = "CONFLICT", details?: unknown): AppError {
+    return new AppError(message, 409, code, details);
   }
 }

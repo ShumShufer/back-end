@@ -1,120 +1,166 @@
-# 10-Day Delivery Plan
+# Project plan
 
-Team: Zeaman (lead/full-stack), Yonas (backend), Yeabsra (frontend), Yohannes (frontend + UI/UX)
+Team: Zeaman (lead/backend + code reviewer), Yonas (backend), Yeabsra (frontend), Yohannes (frontend + UI/UX designer)
 
-## MVP Scope Decision
-
-The full spec in the design docs is a multi-month product. To ship something real in 10 days, we cut to **one clean end-to-end loop** and mark everything else as stretch. This is what gets built:
-
-**In scope (MVP):**
-- Auth (register/login/JWT) — Fayda verification **stubbed** (a mock "verified" flag, real integration later)
-- School browsing (public) + School profile
-- Student enrollment application (submit → admin accept/reject)
-- School/Branch/Classroom/Course/Topic CRUD (Admin, Education Head, Mentor)
-- Classroom hub: announcements, resources, schedule, what's new
-- Tasks/assignments: create, submit, grade, feedback
-- Student progress view (per course/topic)
-- Basic notifications (in-app list, no sockets)
-- Role-based dashboards (Student, Mentor, Admin, Super Admin) — Education Head folded into Admin views for MVP
-- Attendance (simple mark present/absent)
-- Reviews/ratings (basic)
-
-**Explicitly cut / stretch (only if time remains at the end):**
-- Chapa payments (stub the button, no live transaction)
-- Inter-school agreements / practice-elsewhere
-- Staff job applications
-- Price recommendation algorithm (hardcode a placeholder)
-- Driver public directory
-
----
-
-## Timeline Overview
-
-| Day | Theme |
-|---|---|
-| 1 | Project setup, schema, design system, branching |
-| 2 | Auth (backend + frontend) |
-| 3 | Schools/Branches/Classrooms core CRUD |
-| 4 | Enrollment applications flow |
-| 5 | Courses/Topics content structure |
-| 6 | Tasks, submissions, grading |
-| 7 | Schedules, announcements, resources, attendance |
-| 8 | Notifications, reviews, dashboards |
-| 9 | Integration, responsiveness, bug bash |
-| 10 | Final QA, deploy, demo prep |
+## Overview & Scope
+We have 6 days to deliver the full production scope of the platform, with zero features cut initially. We will minimize development environment assumptions and aim to implement the full feature set as described in the design documents. 
+Every feature is assigned to one Frontend (FE) developer and one Backend (BE) developer. Integration happens immediately after the feature is built.
 
 ---
 
 ## Daily Task Allocation
 
-### Day 1 — Setup
-- **Zeaman**: Create both GitHub orgs/repos, branch protection rules, CI skeleton (lint+build on PR), issue templates, project board with all 10 days as milestones, `.env.example` for both repos, Docker compose for local Postgres.
-- **Yonas**: Write `schema.prisma` for all MVP entities, run first migration, seed script with dummy schools/users, set up Express app skeleton (`app.ts`, `server.ts`, error handler, logger, config/env).
-- **Yeabsra**: Scaffold frontend repo (Vite+React+TS+Tailwind), router skeleton with route config + `ProtectedRoute`, `AppShell` layout, folder structure per design doc (`services/`, `context/`, `features/`).
-- **Yohannes**: Build `theme/tokens.css` design tokens (colors, spacing, typography, radius, shadow), Tailwind config mapped to tokens, base component kit (Button, Input, Card, Badge) with Storybook-less visual sanity check page, mobile breakpoints defined.
+### Day 1 — Identity & Foundation
+#### Feature 1: Auth, Profiles & Identity Verification (Fayda)
+**Frontend (John):** 
+- **Pages**: Register, Login, Forgot/Reset Password, Fayda Verification Pending, Onboarding/Role Selection, User Profile.
+- **Context/Services**: `AuthContext`, `IAuthService` (register, login, verify-fayda, me).
+- **Business Logic & Edge Cases**: Handle auto-logout on 401. Ensure forms have strict validation. Show loading state during Fayda verification. 
+- **Prerequisites**: Zod form validation, JWT interceptor setup.
 
-### Day 2 — Auth
-- **Zeaman**: Review Day 1 PRs, merge to dev branches, pair with Yonas on JWT middleware, set up `authenticate`/`authorize` middleware.
-- **Yonas**: `auth.routes/controller/service`: register, login, refresh, logout, `/auth/me`; password hashing; Fayda verification stub endpoint.
-- **Yeabsra**: `IAuthService` interface + mock + remote implementations, `AuthContext`/`AuthProvider`, Login/Register screens, token storage + httpClient interceptor.
-- **Yohannes**: Design & build Login, Register, Fayda-verification-pending screens (responsive), Notifications bell UI shell, Toast/Modal components in `UIContext`.
+**Backend (Yoni):**
+- **Routes/Controllers**: `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/verify-fayda`, `/users/:id`.
+- **Services**: `auth.service.ts` (password hashing, JWT generation, calling `faydaClient.ts` for verification), `users.service.ts`.
+- **Business Logic & Edge Cases**: Handle expired refresh tokens gracefully. Prevent login if `verificationStatus === REJECTED`. Handle duplicate email/phone numbers (Prisma `P2002`).
 
-### Day 3 — Schools/Branches/Classrooms core
-- **Zeaman**: Code review + merges, pair on `scopeToSchool` middleware, unblock integration issues.
-- **Yonas**: Schools, Branches, Classrooms CRUD endpoints + RBAC; role-assignment endpoint (SUPER_ADMIN→ADMIN, ADMIN→EDUCATION_HEAD/MENTOR).
-- **Yeabsra**: `ISchoolService`/`IClassroomService` (mock+remote), `SchoolContext`/`ClassroomContext`, School browse + School profile (public) screens wired to mock data.
-- **Yohannes**: Design School Browse, School Profile, Admin School-Editor, Branch management screens; Sidebar/Topbar per role.
+#### Feature 2: School, Branch & Classroom Core
+**Frontend (Yeab):**
+- **Pages**: Browse Schools (public), School Profile (public), Admin School Profile Editor, Branch Management, Classrooms Directory, Classroom detail hub shell.
+- **Context/Services**: `SchoolContext`, `ISchoolService`, `IClassroomService`.
+- **Business Logic & Edge Cases**: Filter/sort on school list. Handle empty states if a school has no branches or courses. 
+- **Prerequisites**: Role-based access control in React Router (`ProtectedRoute`).
 
-### Day 4 — Enrollment applications
-- **Zeaman**: Review/merge; pair on application-accept logic (auto-creates Enrollment + assigns classroom).
-- **Yonas**: `ApplicationFormTemplate`, Enrollment endpoints (submit/list/accept/reject), notification trigger on status change.
-- **Yeabsra**: `IEnrollmentService`, `EnrollmentContext`, Application form screen (dynamic fields), My Applications (student), Applications Inbox (admin).
-- **Yohannes**: Design application form UX (online/in-person toggle), status tracker UI, Admin inbox review UI with accept/reject actions + feedback states.
-
-### Day 5 — Courses/Topics
-- **Zeaman**: Review/merge; pair on Course/Topic ordering + mandatory-course logic.
-- **Yonas**: Course, Topic, Quiz endpoints; attach-course-to-classroom endpoint; resource upload endpoint (`/uploads` abstraction, local/S3-compatible storage stub).
-- **Yeabsra**: `ICourseService`, Course list/detail, Topic player screen (video/content/resources/quiz), Course creation form (mentor/admin).
-- **Yohannes**: Design Topic player, Course progress stepper component, Quiz-taking UI, mobile layout pass on all Day 3-5 screens.
-
-### Day 6 — Tasks, submissions, grading
-- **Zeaman**: Review/merge; pair on grading + feedback flow; start writing integration tests for critical paths (auth, enrollment, task submission).
-- **Yonas**: Task, Submission endpoints; grading endpoint; `students/:id/submissions` history endpoint; `students/:id/progress` endpoint.
-- **Yeabsra**: `ITaskService`, `TaskContext` (or extend `ClassroomContext`), Task list, Task detail+submit screen, Mentor grading screen.
-- **Yohannes**: Design Task/Assignment cards, submission history + feedback thread UI, deadline countdown component, grading UX for mentor.
-
-### Day 7 — Schedules, announcements, resources, attendance
-- **Zeaman**: Review/merge; implement schedule priority-lock rule end-to-end with Yonas; sanity-check RBAC across all endpoints so far.
-- **Yonas**: Schedule endpoints (priority rank check), Announcement endpoints, Attendance session+records endpoints.
-- **Yeabsra**: Schedule/Calendar screen, Announcements feed ("What's New"), Attendance marking screen (mentor) + history (student).
-- **Yohannes**: Design Calendar component, Announcement cards, Attendance UI, continue responsiveness pass.
-
-### Day 8 — Notifications, reviews, dashboards
-- **Zeaman**: Review/merge; wire notification dispatcher to all trigger points from prior days (announcement, application status, task graded, schedule change).
-- **Yonas**: Notifications endpoints (list/read/read-all), Reviews endpoints, dashboard summary endpoints (per role).
-- **Yeabsra**: `INotificationService`, `NotificationContext` with polling, Notifications Center screen, wire dashboards to real aggregated data.
-- **Yohannes**: Design/polish all 4 role dashboards (cards, charts if time permits), Reviews UI (leave + display), final visual QA pass across the app.
-
-### Day 9 — Integration & bug bash
-- **Zeaman**: Full run-through of every user flow end-to-end (student signup → apply → get accepted → take course → submit task → get graded); triage bugs into GitHub issues and assign.
-- **Yonas**: Fix backend bugs from triage; add remaining input validation gaps; tighten security headers/rate limiting; write/finish integration tests.
-- **Yeabsra**: Fix frontend logic/service-layer bugs; verify mock↔remote swap works cleanly; loading/error states audit on every screen.
-- **Yohannes**: Fix UI/responsive bugs across breakpoints; consistency pass on spacing/typography/colors against tokens; empty-state and error-state visuals.
-
-### Day 10 — Final QA & demo prep
-- **Zeaman**: Merge dev → main for both repos after final approval, deploy (staging/production), write final README + setup docs, prepare demo script.
-- **Yonas**: Final backend smoke test on deployed environment, seed demo data, monitor logs during demo rehearsal.
-- **Yeabsra**: Final frontend smoke test on deployed environment, cross-browser check.
-- **Yohannes**: Final visual polish, prepare demo walkthrough slides/screens, record backup demo video in case of live issues.
+**Backend (Zeaman):**
+- **Routes/Controllers**: `/schools`, `/schools/:id`, `/schools/:id/branches`, `/classrooms`.
+- **Services**: `schools.service.ts`, `branches.service.ts`, `classrooms.service.ts`.
+- **Business Logic & Edge Cases**: Implement `scopeToSchool` middleware strictly. Handle geographic queries (latitude/longitude) if filtering by distance.
 
 ---
 
-## GitHub Issue Labeling Suggestion
+### Day 2 — Applications & Content Catalog
+#### Feature 3: Enrollment & Staff Applications
+**Frontend (John):**
+- **Pages**: School Application Form (dynamic fields), My Applications (student), Enrollment Inbox (admin), Post Staff Job Opening, Staff Applications Inbox.
+- **Context/Services**: `EnrollmentContext`, `IEnrollmentService`, `IStaffApplicationService`.
+- **Business Logic & Edge Cases**: Dynamic form rendering based on `ApplicationFormTemplate`. Handling state changes (pending -> accepted -> assigned to classroom).
+- **Prerequisites**: Dynamic form builders in React.
 
-When creating issues from this plan, tag each with:
-- `area:frontend` / `area:backend`
-- `role:student` / `role:mentor` / `role:admin` / `role:super-admin` (when relevant)
-- `day-1` … `day-10` milestone
-- `priority:mvp` / `priority:stretch`
+**Backend (Yoni):**
+- **Routes/Controllers**: `/schools/:id/application-form`, `/schools/:id/applications`, `/applications/:id/accept`, `/staff-posts`, `/schools/:id/staff-applications`.
+- **Services**: `enrollments.service.ts`, `staffApplications.service.ts`.
+- **Business Logic & Edge Cases**: Auto-create `Enrollment` record and assign to classroom when an application is accepted. Trigger notifications to the applicant.
 
-This lets you filter the board by person, day, or area at standup.
+#### Feature 4: Course Catalog & Topics
+**Frontend (Yeab):**
+- **Pages**: Course Catalog (browse), Course Detail / Topic Player (video/content), Admin Course & Pricing Editor, Create/Edit Topic (mentor view).
+- **Context/Services**: `CourseContext`, `ICourseService`.
+- **Business Logic & Edge Cases**: Prevent accessing topic content if not enrolled (unless `isFree`). Video player state tracking. Displaying AI price recommendations.
+- **Prerequisites**: Media player integration.
+
+**Backend (Zeaman):**
+- **Routes/Controllers**: `/courses`, `/courses/:id/topics`, `/courses/:id/price-recommendation`.
+- **Services**: `courses.service.ts`, `priceRecommendation.ts` algorithm.
+- **Business Logic & Edge Cases**: Calculate and return a suggested price based on market data. Validate topic ordering logic.
+
+---
+
+### Day 3 — Tasks & Grading
+#### Feature 5: Task Management & Quizzes
+**Frontend (John):**
+- **Pages**: Classroom Tasks List, Task Detail & Submission, Quiz/Test Builder (mentor), Daily Practice Quizzes (standalone).
+- **Context/Services**: `TaskContext`, `ITaskService`, `IQuizService`.
+- **Business Logic & Edge Cases**: Quiz countdown timers. Handling multiple attachments in submissions. Drag-and-drop file uploads.
+- **Prerequisites**: FormData handling for file uploads.
+
+**Backend (Yoni):**
+- **Routes/Controllers**: `/tasks`, `/tasks/:id/submissions`, `/quizzes`, `/uploads`.
+- **Services**: `tasks.service.ts`, `uploads.service.ts` (S3/local storage abstraction).
+- **Business Logic & Edge Cases**: Enforce deadlines (reject late submissions unless allowed). Ensure students only see tasks for their enrolled classrooms.
+
+#### Feature 6: Grading, Feedback & Course Results
+**Frontend (Yeab):**
+- **Pages**: Mentor Grading Screen (submission history, rubric), My Results / Performance Report (student).
+- **Context/Services**: `ITaskService` (grading), `ICourseResultService`.
+- **Business Logic & Edge Cases**: Displaying rich-text feedback. Calculating overall progress percentages.
+- **Prerequisites**: Chart/progress bar rendering.
+
+**Backend (Zeaman):**
+- **Routes/Controllers**: `/submissions/:id/grade`, `/course-results/:courseId/publish`, `/students/:id/progress`.
+- **Services**: `tasks.service.ts` (grading), `courses.service.ts` (results).
+- **Business Logic & Edge Cases**: Auto-evaluate pass/fail status when final exam is graded. Trigger notifications on grade publish.
+
+---
+
+### Day 4 — Logistics & Networking
+#### Feature 7: Schedules (Priority-aware) & Attendance
+**Frontend (John):**
+- **Pages**: Classroom Schedule/Calendar, Global Education Schedule Builder (education head), Attendance Marking Screen (mentor), Attendance History.
+- **Context/Services**: `IScheduleService`, `IAttendanceService`.
+- **Business Logic & Edge Cases**: Handle blocked-out dates. Show conflicts visually. Mentor bulk attendance marking.
+- **Prerequisites**: Complex calendar component integration (e.g., FullCalendar).
+
+**Backend (Yoni):**
+- **Routes/Controllers**: `/schedules`, `/attendance-sessions`.
+- **Services**: `schedules.service.ts`, `attendance.service.ts`.
+- **Business Logic & Edge Cases**: **Priority Rule Enforcement**: Prevent lower roles (Mentor) from overriding higher roles (Education Head/Admin) in schedules. Send 403 `SCHEDULE_LOCKED`.
+
+#### Feature 8: Inter-School Agreements & Practice-Elsewhere
+**Frontend (Yeab):**
+- **Pages**: Inter-School Agreements (propose/accept), Practice-Elsewhere Requests (student request form, admin inbox).
+- **Context/Services**: `IAgreementService`, `IPracticeRequestService`.
+- **Business Logic & Edge Cases**: Show fee splitting terms clearly. Status tracking for cross-school approvals.
+- **Prerequisites**: Multi-tenant data concepts.
+
+**Backend (Zeaman):**
+- **Routes/Controllers**: `/agreements`, `/practice-requests`.
+- **Services**: `agreements.service.ts`.
+- **Business Logic & Edge Cases**: Verify both schools exist and agree on fee splits. Auto-trigger payment requirements upon approval.
+
+---
+
+### Day 5 — Commerce & Engagement
+#### Feature 9: Payments (Chapa) & Revenue
+**Frontend (John):**
+- **Pages**: Payments / Billing History, Checkout Flow (redirect to Chapa), Admin Revenue & Commission Report.
+- **Context/Services**: `PaymentContext`, `IPaymentService`.
+- **Business Logic & Edge Cases**: Handle payment failure redirects. Show pending payment statuses.
+- **Prerequisites**: Chapa payment gateway docs.
+
+**Backend (Yoni):**
+- **Routes/Controllers**: `/payments/initiate`, `/payments/webhook`, `/schools/:id/revenue`.
+- **Services**: `payments.service.ts` (Chapa integration), `chapaClient.ts`.
+- **Business Logic & Edge Cases**: Webhook signature verification is CRITICAL. Idempotency for webhook processing. Deduct platform commission accurately.
+
+#### Feature 10: Notifications, Reviews & Student Reports
+**Frontend (Yeab):**
+- **Pages**: Notifications Center, Leave Review (student), View Reviews (public), Report Student (mentor).
+- **Context/Services**: `NotificationContext`, `IReviewService`, `IReportService`.
+- **Business Logic & Edge Cases**: Polling for unread notifications. Aggregating star ratings.
+- **Prerequisites**: Notification bell polling/websockets.
+
+**Backend (Zeaman):**
+- **Routes/Controllers**: `/notifications`, `/schools/:id/reviews`, `/classrooms/:id/reports`.
+- **Services**: `notifications.service.ts` (dispatcher), `reviews.service.ts`, `reports.service.ts`.
+- **Business Logic & Edge Cases**: `notificationDispatcher.ts` must fan-out correctly to multiple recipients based on topic subscriptions.
+
+---
+
+### Day 6 — Polish & Production
+#### Feature 11: Dashboards & Reporting
+**Frontend (John):**
+- **Pages**: Super Admin Dashboard (platform metrics), Admin Dashboard (school KPIs), Mentor Dashboard, Education Head Dashboard.
+- **Context/Services**: Analytics services for each role.
+- **Business Logic & Edge Cases**: Rendering charts for student count, revenue, graduation rates.
+- **Prerequisites**: Data visualization libraries (e.g., Chart.js or Recharts).
+
+**Backend (Yoni):**
+- **Routes/Controllers**: `/admin/dashboard`, `/schools/:id/dashboard`, `/education-head/:id/dashboard`, `/mentor/:id/dashboard`.
+- **Services**: `admin.service.ts` and others for aggregating data.
+- **Business Logic & Edge Cases**: Efficient Prisma aggregations (`groupBy`, `count`, `sum`) to prevent slow load times.
+
+#### Feature 12: End-to-End Bug Bash & Final QA
+**Frontend (Yeab) & Backend (Zeaman):**
+- Full end-to-end user flow testing (register -> pay -> enroll -> learn -> submit task -> get graded -> graduate -> practice elsewhere).
+- Mobile responsiveness audit on all screens.
+- Security audit (headers, rate limiting, JWT rotation).
+- Production deployment and demo preparation.

@@ -1,8 +1,12 @@
 import app from './app.js';
+import prisma from './config/db.js';
 import { envConfig } from './config/envConfig.js';
 
-const startServer = async () => {
+async function startServer() {
   try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('Connected to Database');
+
     const server = app.listen(envConfig.PORT, () => {
       console.log(`Server is running in ${envConfig.NODE_ENV} mode on port ${envConfig.PORT}`);
     });
