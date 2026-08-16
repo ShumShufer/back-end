@@ -51,7 +51,7 @@ Tags: `feat` (new feature), `fix` (bug fix), `doc` (documentation), `ui` (stylin
 - Every resource scoped to a school checks the requester actually belongs to that school (`scopeToSchool`).
 - No raw SQL string concatenation — Prisma queries only.
 - Secrets/config only come from environment variables, validated at startup — never hardcoded.
-
+- **Function Declarations only**: Use `async function myFunc() {}` syntax for all exports and functions. Do NOT use function expressions (`const myFunc = async () => {}`).
 ## 6. Comments & Documentation
 
 - Every exported function/service method gets a short comment explaining *why* it exists if the name alone isn't obvious — not a restatement of the code.

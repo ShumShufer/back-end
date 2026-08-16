@@ -72,6 +72,7 @@ This file applies to both the `driving-platform-frontend` and `driving-platform-
 - Match the existing response envelope exactly (`{ success, data, meta }` / `{ success: false, error: { code, message } }`) — don't introduce a different shape for a new endpoint.
 - Match existing error-throwing pattern (`AppError(code, message, status)`) rather than inventing a new error-handling approach in one file.
 - Follow existing file/folder naming exactly when adding a new resource (`x.routes.ts`, `x.controller.ts`, `x.service.ts`, `x.schema.ts`).
+- **Function Declarations**: Use standard function declarations (`async function fun() {}`) instead of arrow function expressions (`const fun = async () => {}`) across the backend codebase.
 
 ---
 
