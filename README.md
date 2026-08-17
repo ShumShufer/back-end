@@ -1,10 +1,13 @@
 # Driving School Platform - Backend
 
 ## Overview of the Problem We Solve
+
 The Driving School Platform is designed to modernize and streamline the operations of driving schools. It provides a centralized system to manage student enrollments, mentor assignments, course curriculum, scheduling, attendance, and task grading. By integrating with national services like Fayda (Ethiopian National ID) for identity verification and Chapa for seamless payments, it ensures a secure, compliant, and efficient experience for students, mentors, and administrators.
 
 ## Project Architecture
+
 The backend is built using a strict layered architecture:
+
 - **Stack**: Express.js, TypeScript, PostgreSQL, Prisma ORM, Zod, JWT
 - **Layering Principle**: `Routes → Middlewares → Controllers → Services (Prisma)`
 - **Core Features**: Role-Based Access Control (RBAC), JWT authentication, input validation via Zod, and centralized error handling.
@@ -12,10 +15,12 @@ The backend is built using a strict layered architecture:
 ## How to Set Up and Run
 
 ### Prerequisites
+
 - Node.js (v18+)
 - PostgreSQL (installed and running locally)
 
 ### Setup Instructions
+
 1. **Clone the repository** and navigate to the backend directory.
 2. **Install dependencies**:
    ```bash
@@ -40,7 +45,8 @@ The backend is built using a strict layered architecture:
    ```
 
 ## The Team
+
 - **Zeamanuel Mebit** (ID: CTC-3498-26) - Lead, Code Reviewer
-- **Yonas** (ID: [id]) - Backend dev
-- **Yeabsra** (ID: [id]) - Frontend dev
-- **Yohannes** (ID: [id]) - UI/UX designer, frontend dev
+- **Yonas** (ID: CTC-3303-26 ) - Backend dev
+- **Yeabsra** ( ID: CTC-2878-26 ) - Frontend dev
+- **Yohannes** ( ID: CTC-7823-26 ) - UI/UX designer, frontend dev
