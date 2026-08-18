@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  PAGINATION_DEFAULT_PAGE,
+  PAGINATION_DEFAULT_PAGE_SIZE,
+  PAGINATION_MAX_PAGE_SIZE,
+} from "../config/constants.js";
 
 /**
  * Schema for a student submitting an enrollment application to a school.
@@ -54,13 +59,15 @@ export const queryApplicationsSchema = z.object({
   page: z
     .string()
     .optional()
-    .default("1")
-    .transform((val) => Math.max(1, parseInt(val, 10) || 1)),
+    .default(String(PAGINATION_DEFAULT_PAGE))
+    .transform((val) => Math.max(1, parseInt(val, 10) || PAGINATION_DEFAULT_PAGE)),
   pageSize: z
     .string()
     .optional()
-    .default("20")
-    .transform((val) => Math.min(100, Math.max(1, parseInt(val, 10) || 20))),
+    .default(String(PAGINATION_DEFAULT_PAGE_SIZE))
+    .transform((val) =>
+      Math.min(PAGINATION_MAX_PAGE_SIZE, Math.max(1, parseInt(val, 10) || PAGINATION_DEFAULT_PAGE_SIZE)),
+    ),
 });
 
 export type SubmitApplicationInput = z.infer<typeof submitApplicationSchema>;
