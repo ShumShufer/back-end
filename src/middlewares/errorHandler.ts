@@ -1,10 +1,27 @@
 import type { NextFunction, Request, Response } from "express";
 
-// Import removed to avoid type inference issues if Prisma client isn't generated
-// import { Prisma } from "@prisma/client";
-// import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-
 import { AppError } from "../helpers/appError.js";
+
+interface PrismaKnownError {
+  code: string;
+  clientVersion: string;
+  meta?: unknown;
+}
+
+function isPrismaError(err: unknown): err is PrismaKnownError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    "clientVersion" in err &&
+    typeof (err as PrismaKnownError).code === "string" &&
+    typeof (err as PrismaKnownError).clientVersion === "string"
+  );
+}
+
+function isNamedError(err: unknown, name: string): err is Error {
+  return err instanceof Error && err.name === name;
+}
 
 export function errorHandler(
   err: unknown,
@@ -16,19 +33,17 @@ export function errorHandler(
 
   if (err instanceof AppError) {
     appError = err;
-  } else if (err && typeof err === "object" && "code" in err && (err as any).clientVersion) {
-    // Prisma errors typically have clientVersion and code
-    const prismaErr = err as any;
-    if (prismaErr.code === "P2002") {
-      appError = AppError.conflict("A record with that value already exists", "UNIQUE_CONSTRAINT_VIOLATION", prismaErr.meta);
-    } else if (prismaErr.code === "P2025") {
-      appError = AppError.notFound("Record not found", "RECORD_NOT_FOUND", prismaErr.meta);
+  } else if (isPrismaError(err)) {
+    if (err.code === "P2002") {
+      appError = AppError.conflict("A record with that value already exists", "UNIQUE_CONSTRAINT_VIOLATION", err.meta);
+    } else if (err.code === "P2025") {
+      appError = AppError.notFound("Record not found", "RECORD_NOT_FOUND", err.meta);
     } else {
-      appError = AppError.badRequest("Database request error", "DB_ERROR", { code: prismaErr.code, meta: prismaErr.meta });
+      appError = AppError.badRequest("Database request error", "DB_ERROR", { code: err.code, meta: err.meta });
     }
-  } else if (err && (err as any).name === "TokenExpiredError") {
+  } else if (isNamedError(err, "TokenExpiredError")) {
     appError = AppError.unauthorized("Session expired, please log in again", "TOKEN_EXPIRED");
-  } else if (err && (err as any).name === "JsonWebTokenError") {
+  } else if (isNamedError(err, "JsonWebTokenError")) {
     appError = AppError.unauthorized("Invalid authentication token", "INVALID_TOKEN");
   } else {
     appError = new AppError(
