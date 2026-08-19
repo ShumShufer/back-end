@@ -34,8 +34,13 @@ export function scopeToSchool(
   }
 
   const userSchoolId = req.user.schoolId;
+
+  // Check all possible locations where a school ID can appear in a request.
+  // Nested routes (e.g. /schools/:id/branches) use :id, not :schoolId,
+  // so we must check both param names to avoid silently skipping the scope check.
   const requestedSchoolId =
     (req.params.schoolId as string | undefined) ??
+    (req.params.id as string | undefined) ??
     (req.body?.schoolId as string | undefined) ??
     (req.query.schoolId as string | undefined);
 

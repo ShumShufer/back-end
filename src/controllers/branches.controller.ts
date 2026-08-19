@@ -4,6 +4,7 @@ import { apiResponse } from "../helpers/apiResponse.js";
 import type {
   CreateBranchInput,
   UpdateBranchInput,
+  QueryNearbyBranchesInput,
 } from "../validators/branch.schema.js";
 
 /**
@@ -95,5 +96,23 @@ export function deleteBranch(
     res
       .status(200)
       .json(apiResponse(result, "Branch deleted successfully", 200));
+  })().catch(next);
+}
+
+/**
+ * Get branches near a geographic coordinate (Public)
+ * GET /branches/nearby?lat=&lng=&radius=
+ */
+export function getNearbyBranches(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const query = req.query as unknown as QueryNearbyBranchesInput;
+    const result = await branchesService.getNearbyBranches(query);
+    res
+      .status(200)
+      .json(apiResponse(result, "Nearby branches retrieved successfully", 200));
   })().catch(next);
 }

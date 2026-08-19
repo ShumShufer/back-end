@@ -3,6 +3,7 @@ import { AppError } from "../helpers/appError.js";
 import type {
   CreateBranchInput,
   UpdateBranchInput,
+  QueryNearbyBranchesInput,
 } from "../validators/branch.schema.js";
 
 /**
@@ -116,4 +117,72 @@ export async function deleteBranch(branchId: string) {
   });
 
   return { message: "Branch deleted successfully" };
+}
+
+/**
+ * Get branches within a given radius of a lat/lng coordinate (public).
+ *
+ * Uses the Haversine formula to calculate great-circle distance between
+ * two points on Earth. Prisma does not support spatial queries natively,
+ * so we fetch all branches and filter in-process. This is acceptable
+ * because the total number of branches is bounded and small.
+ *
+ * Haversine formula:
+ *   a = sin²(Δlat/2) + cos(lat1) * cos(lat2) * sin²(Δlng/2)
+ *   distance = 2R * atan2(√a, √(1−a))   where R = 6371 km
+ */
+export async function getNearbyBranches(query: QueryNearbyBranchesInput) {
+  const { lat, lng, radius, page, pageSize } = query;
+  const EARTH_RADIUS_KM = 6371;
+
+  // Fetch all branches — we filter by non-null coords and distance in-process.
+  // Prisma's generated types for nullable Float don't support { not: null } in
+  // this version, so we guard with a runtime null check in the map below.
+  const branches = await prisma.branch.findMany({
+    include: {
+      school: {
+        select: { id: true, name: true, status: true },
+      },
+    },
+  });
+
+  // Calculate distance for each branch and filter by radius
+  const withDistance = branches
+    .filter((branch) => branch.latitude !== null && branch.longitude !== null)
+    .map((branch) => {
+      const branchLat = branch.latitude as number;
+      const branchLng = branch.longitude as number;
+
+      const dLat = ((branchLat - lat) * Math.PI) / 180;
+      const dLng = ((branchLng - lng) * Math.PI) / 180;
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat * Math.PI) / 180) *
+          Math.cos((branchLat * Math.PI) / 180) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+
+      const distanceKm =
+        2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return { ...branch, distanceKm };
+    })
+    .filter((branch) => branch.distanceKm <= radius)
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  // Apply pagination after filtering
+  const total = withDistance.length;
+  const skip = (page - 1) * pageSize;
+  const paginated = withDistance.slice(skip, skip + pageSize);
+
+  return {
+    branches: paginated,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+  };
 }
