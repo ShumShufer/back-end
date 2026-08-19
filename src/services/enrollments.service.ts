@@ -129,6 +129,31 @@ export async function getMyApplications(studentId: string) {
 }
 
 /**
+ * Get all applications for a specific student by their user ID.
+ * Accessible by the student themselves, their school ADMIN, or SUPER_ADMIN.
+ * The caller is responsible for verifying access rights before calling this.
+ */
+export async function getApplicationsByStudentId(studentId: string) {
+  const student = await prisma.user.findUnique({ where: { id: studentId } });
+  if (!student) {
+    throw AppError.notFound("Student not found");
+  }
+
+  return prisma.enrollment.findMany({
+    where: { studentId },
+    orderBy: { submittedAt: "desc" },
+    include: {
+      school: {
+        select: { id: true, name: true },
+      },
+      classroom: {
+        select: { id: true, name: true },
+      },
+    },
+  });
+}
+
+/**
  * Submit a new enrollment application to a school (STUDENT).
  * Prevents duplicate PENDING applications to the same school.
  */

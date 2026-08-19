@@ -56,8 +56,8 @@ export default router;
  */
 export const staffApplicationActionsRouter = Router();
 
-// POST /staff-applications/:id/accept — ADMIN accepts; promotes applicant's role
-staffApplicationActionsRouter.post(
+// PATCH /staff-applications/:id/accept — ADMIN accepts; promotes applicant's role
+staffApplicationActionsRouter.patch(
   "/:id/accept",
   authenticate,
   authorize(Role.ADMIN, Role.SUPER_ADMIN),
@@ -65,8 +65,8 @@ staffApplicationActionsRouter.post(
   staffApplicationsController.acceptStaffApplication,
 );
 
-// POST /staff-applications/:id/reject — ADMIN rejects and notifies applicant
-staffApplicationActionsRouter.post(
+// PATCH /staff-applications/:id/reject — ADMIN rejects and notifies applicant
+staffApplicationActionsRouter.patch(
   "/:id/reject",
   authenticate,
   authorize(Role.ADMIN, Role.SUPER_ADMIN),
