@@ -1,5 +1,6 @@
 import prisma from "../config/db.js";
 import { AppError } from "../helpers/appError.js";
+import { Role, type AuthUser } from "../types/auth.types.js";
 import type {
   SubmitApplicationInput,
   AcceptApplicationInput,
@@ -130,17 +131,35 @@ export async function getMyApplications(studentId: string) {
 
 /**
  * Get all applications for a specific student by their user ID.
- * Accessible by the student themselves, their school ADMIN, or SUPER_ADMIN.
- * The caller is responsible for verifying access rights before calling this.
+ * Students can only view themselves. School admins receive only applications
+ * submitted to their school; SUPER_ADMIN can view all of a student's records.
  */
-export async function getApplicationsByStudentId(studentId: string) {
+export async function getApplicationsByStudentId(
+  studentId: string,
+  requester: AuthUser,
+) {
   const student = await prisma.user.findUnique({ where: { id: studentId } });
   if (!student) {
     throw AppError.notFound("Student not found");
   }
 
+  if (requester.role === Role.STUDENT && requester.id !== studentId) {
+    throw AppError.forbidden("You can only view your own applications");
+  }
+
+  if (requester.role !== Role.SUPER_ADMIN && requester.role !== Role.STUDENT) {
+    if (!requester.schoolId) {
+      throw AppError.forbidden("School context is required for this action");
+    }
+  }
+
   return prisma.enrollment.findMany({
-    where: { studentId },
+    where: {
+      studentId,
+      ...(requester.role !== Role.SUPER_ADMIN && requester.role !== Role.STUDENT
+        ? { schoolId: requester.schoolId! }
+        : {}),
+    },
     orderBy: { submittedAt: "desc" },
     include: {
       school: {

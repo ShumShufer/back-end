@@ -11,7 +11,6 @@ import staffPostsRoutes, {
 } from "./staffApplications.routes.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
-import { scopeToSchool } from "../middlewares/scopeToSchool.js";
 import * as enrollmentsController from "../controllers/enrollments.controller.js";
 import { Role } from "../types/auth.types.js";
 
@@ -59,13 +58,13 @@ router.use("/applications", enrollmentsRoutes);
 /**
  * Students — student-scoped endpoints
  * GET /students/:id/applications — view a student's applications (self, ADMIN, SUPER_ADMIN)
- * scopeToSchool ensures ADMIN can only view students within their own school
+ * Service-level authorization ensures students can view only themselves and
+ * school admins receive only applications for their own school.
  */
 router.get(
   "/students/:id/applications",
   authenticate,
   authorize(Role.STUDENT, Role.ADMIN, Role.SUPER_ADMIN),
-  scopeToSchool,
   enrollmentsController.getApplicationsByStudentId,
 );
 

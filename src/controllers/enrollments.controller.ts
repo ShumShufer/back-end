@@ -95,7 +95,10 @@ export function getApplicationsByStudentId(
 ): Promise<void> {
   return (async () => {
     const { id } = req.params;
-    const result = await enrollmentsService.getApplicationsByStudentId(id as string);
+    const result = await enrollmentsService.getApplicationsByStudentId(
+      id as string,
+      req.user!,
+    );
     res
       .status(200)
       .json(apiResponse(result, "Student applications retrieved successfully", 200));
