@@ -2,6 +2,7 @@ import { PrismaClient, Role, VerificationStatus, ApplicationMode, ApplicationSta
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import 'dotenv/config';
+import { hashPassword } from '../src/helpers/password.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -94,9 +95,9 @@ async function main() {
 
   // ─── Users ─────────────────────────────────────────────────
   // Password hash for "password123" — in real usage, generate with bcrypt/argon2
-  const fakePasswordHash = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012';
+  const fakePasswordHash = await hashPassword("password123");
 
-  const superAdmin = await prisma.user.create({
+  await prisma.user.create({
     data: {
       email: 'superadmin@shumshufer.com',
       passwordHash: fakePasswordHash,
@@ -122,7 +123,7 @@ async function main() {
     },
   });
 
-  const educationHead = await prisma.user.create({
+  await prisma.user.create({
     data: {
       email: 'edhead@addisdriving.com',
       phone: '+251911000002',
@@ -203,7 +204,7 @@ async function main() {
     },
   });
 
-  const adminB = await prisma.user.create({
+  await prisma.user.create({
     data: {
       email: 'admin@boledriving.com',
       phone: '+251911000008',
@@ -268,7 +269,7 @@ async function main() {
     },
   });
 
-  const courseFree = await prisma.course.create({
+  await prisma.course.create({
     data: {
       title: 'Road Safety Awareness',
       description: 'Free course open to all — basic road safety tips for pedestrians and drivers.',
@@ -298,7 +299,7 @@ async function main() {
     },
   });
 
-  const topic3 = await prisma.topic.create({
+  await prisma.topic.create({
     data: {
       courseId: courseTheory.id,
       title: 'Right of Way',
@@ -436,7 +437,7 @@ async function main() {
   console.log('  ✓ Created application form template');
 
   // ─── School Agreement ──────────────────────────────────────
-  const agreement = await prisma.schoolAgreement.create({
+  await prisma.schoolAgreement.create({
     data: {
       schoolAId: schoolA.id,
       schoolBId: schoolB.id,
@@ -460,7 +461,7 @@ async function main() {
     },
   });
 
-  const task2 = await prisma.task.create({
+  await prisma.task.create({
     data: {
       classroomId: classroomA1.id,
       createdById: mentor1.id,
