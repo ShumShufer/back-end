@@ -64,7 +64,7 @@ async function main() {
 
   console.log('  ✓ Created schools');
 
-  // ─── Branches ──────────────────────────────────────────────
+  //  Branches 
   await prisma.branch.createMany({
     data: [
       {
