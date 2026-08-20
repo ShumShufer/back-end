@@ -1,19 +1,75 @@
 import type { NextFunction, Request, Response } from "express";
 
 import { AppError } from "../helpers/appError.js";
+import prisma from "../config/db.js";
 import { Role } from "../types/auth.types.js";
 
-export function scopeToSchool(
+async function getResourceSchoolId(req: Request): Promise<string | undefined> {
+  const path = req.originalUrl.split("?")[0] ?? "";
+
+  // School-nested routes and the school resource itself carry the actual school ID.
+  const schoolMatch = path.match(/\/schools\/([^/]+)(?:\/|$)/);
+  if (schoolMatch?.[1]) return schoolMatch[1];
+
+  const resourceId = typeof req.params.id === "string" ? req.params.id : undefined;
+  const bodySchoolId = typeof req.body?.schoolId === "string" ? req.body.schoolId : undefined;
+  const querySchoolId = typeof req.query.schoolId === "string" ? req.query.schoolId : undefined;
+  if (!resourceId) {
+    if (bodySchoolId ?? querySchoolId) return bodySchoolId ?? querySchoolId;
+
+    // Classroom creation derives the school from the authenticated user when
+    // the request does not provide schoolId.
+    if (req.method === "POST" && /\/classrooms\/?$/.test(path)) {
+      return req.user?.schoolId ?? undefined;
+    }
+
+    return undefined;
+  }
+
+  if (/\/branches\//.test(path)) {
+    return (await prisma.branch.findUnique({ where: { id: resourceId }, select: { schoolId: true } }))?.schoolId;
+  }
+
+  if (/\/classrooms\//.test(path)) {
+    return (await prisma.classroom.findUnique({ where: { id: resourceId }, select: { schoolId: true } }))?.schoolId;
+  }
+
+  if (/\/applications\//.test(path) && !/\/staff-applications\//.test(path)) {
+    return (await prisma.enrollment.findUnique({ where: { id: resourceId }, select: { schoolId: true } }))?.schoolId;
+  }
+
+  if (/\/staff-posts\//.test(path)) {
+    return (await prisma.staffApplicationPost.findUnique({ where: { id: resourceId }, select: { schoolId: true } }))?.schoolId;
+  }
+
+  if (/\/staff-applications\//.test(path)) {
+    const application = await prisma.staffApplication.findUnique({
+      where: { id: resourceId },
+      select: { postId: true },
+    });
+    if (!application) return undefined;
+    return (
+      await prisma.staffApplicationPost.findUnique({
+        where: { id: application.postId },
+        select: { schoolId: true },
+      })
+    )?.schoolId;
+  }
+
+  return undefined;
+}
+
+export async function scopeToSchool(
   req: Request,
   _res: Response,
   next: NextFunction,
-): void {
+): Promise<void> {
   if (!req.user) {
     next(AppError.unauthorized("Authentication required"));
     return;
   }
 
-  if (req.user.role === Role.SUPER_ADMIN || req.user.role === Role.STUDENT) {
+  if (req.user.role === Role.SUPER_ADMIN) {
     next();
     return;
   }
@@ -22,6 +78,7 @@ export function scopeToSchool(
     Role.ADMIN,
     Role.EDUCATION_HEAD,
     Role.MENTOR,
+    Role.STUDENT,
   ]);
 
   if (!schoolScopedRoles.has(req.user.role)) {
@@ -35,33 +92,30 @@ export function scopeToSchool(
 
   const userSchoolId = req.user.schoolId;
 
-  // Check all possible locations where a school ID can appear in a request.
-  // Nested routes (e.g. /schools/:id/branches) use :id, not :schoolId,
-  // so we must check both param names to avoid silently skipping the scope check.
-  const requestedSchoolId =
-    (req.params.schoolId as string | undefined) ??
-    (req.params.id as string | undefined) ??
-    (req.body?.schoolId as string | undefined) ??
-    (req.query.schoolId as string | undefined);
-
   if (!userSchoolId) {
     next(AppError.forbidden("School context is required for this action"));
     return;
   }
 
-  if (!requestedSchoolId) {
+  try {
+    const requestedSchoolId = await getResourceSchoolId(req);
+
+    if (!requestedSchoolId) {
+      next(AppError.forbidden("Unable to determine the school for this resource"));
+      return;
+    }
+
+    if (requestedSchoolId !== userSchoolId) {
+      next(
+        AppError.forbidden(
+          "You can only access resources within your own school",
+        ),
+      );
+      return;
+    }
+
     next();
-    return;
+  } catch (error) {
+    next(error);
   }
-
-  if (requestedSchoolId !== userSchoolId) {
-    next(
-      AppError.forbidden(
-        "You can only access resources within your own school",
-      ),
-    );
-    return;
-  }
-
-  next();
 }

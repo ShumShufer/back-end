@@ -59,7 +59,7 @@ export const schoolBranchRouter = Router({ mergeParams: true });
 schoolBranchRouter.get("/", branchesController.getBranchesBySchoolId);
 
 // POST /schools/:id/branches — ADMIN only, creates a branch under this school
-// scopeToSchool reads :id from the parent route param to enforce school ownership
+// scopeToSchool resolves the parent school ID to enforce school ownership
 schoolBranchRouter.post(
   "/",
   authenticate,

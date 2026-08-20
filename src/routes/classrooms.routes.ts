@@ -21,8 +21,8 @@ const router = Router();
  */
 router.get("/", authenticate, classroomsController.getClassrooms);
 
-// GET /classrooms/:id — full classroom detail; any authenticated user
-router.get("/:id", authenticate, classroomsController.getClassroomById);
+// GET /classrooms/:id — full classroom detail, restricted to the user's school
+router.get("/:id", authenticate, scopeToSchool, classroomsController.getClassroomById);
 
 /**
  * POST /classrooms — create a new classroom
