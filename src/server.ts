@@ -1,6 +1,6 @@
 import app from './app.js';
-import prisma from './config/db.js';
-import { envConfig } from './config/envConfig.js';
+import prisma from "./shared/config/db.js";
+import { envConfig } from "./shared/config/envConfig.js";
 
 async function startServer() {
   try {

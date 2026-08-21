@@ -2,7 +2,7 @@ import { PrismaClient, Role, VerificationStatus, ApplicationMode, ApplicationSta
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import 'dotenv/config';
-import { hashPassword } from '../src/helpers/password.js';
+import { hashPassword } from '../src/shared/helpers/password.js';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
