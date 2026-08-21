@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import prisma from "../../shared/config/db.js";
 import { AppError } from "../../shared/helpers/appError.js";
 import { hashPassword, comparePassword } from "../../shared/helpers/password.js";
@@ -11,6 +12,8 @@ import type {
   RegisterInput,
   LoginInput,
   VerifyFaydaInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
 } from "./auth.schema.js";
 import type { Role } from "../../shared/types/auth.types.js";
 
@@ -305,4 +308,87 @@ export async function getCurrentUser(userId: string): Promise<{
     role: user.role,
     verificationStatus: user.verificationStatus,
   };
+}
+
+/**
+ * Request a password reset.
+ * Generates a secure random token stored in the DB, valid for 1 hour.
+ * In production this token would be emailed to the user.
+ * For development/testing the token is returned directly in the response.
+ */
+export async function forgotPassword(input: ForgotPasswordInput) {
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
+
+  // Always return success to prevent user enumeration attacks
+  if (!user) {
+    return { message: "If an account with that email exists, a reset token has been sent." };
+  }
+
+  // Invalidate any existing unused tokens for this user
+  await prisma.passwordResetToken.updateMany({
+    where: { userId: user.id, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+
+  // Generate a cryptographically secure random token
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+  await prisma.passwordResetToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  // TODO: In production, send email with reset link containing this token.
+  // e.g. `https://app.shumshufer.com/reset-password?token=${token}`
+
+  return {
+    message: "If an account with that email exists, a reset token has been sent.",
+    // NOTE: Only expose token in development/testing. Remove in production!
+    ...(process.env["NODE_ENV"] !== "production" ? { resetToken: token } : {}),
+  };
+}
+
+/**
+ * Reset the user's password using a valid, unexpired reset token.
+ */
+export async function resetPassword(input: ResetPasswordInput) {
+  const resetRecord = await prisma.passwordResetToken.findUnique({
+    where: { token: input.token },
+    include: { user: true },
+  });
+
+  if (!resetRecord) {
+    throw AppError.badRequest("Invalid or expired reset token");
+  }
+
+  if (resetRecord.usedAt) {
+    throw AppError.badRequest("This reset token has already been used");
+  }
+
+  if (resetRecord.expiresAt < new Date()) {
+    throw AppError.badRequest("Reset token has expired. Please request a new one.");
+  }
+
+  // Hash the new password
+  const passwordHash = await hashPassword(input.password);
+
+  // Update password and mark token as used atomically
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetRecord.userId },
+      data: { passwordHash },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetRecord.id },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+
+  return { message: "Password reset successfully. You can now log in with your new password." };
 }

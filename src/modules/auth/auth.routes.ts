@@ -8,6 +8,8 @@ import {
   loginSchema,
   refreshTokenSchema,
   verifyFaydaSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "./auth.schema.js";
 
 const router: Router = createRouter();
@@ -23,6 +25,20 @@ router.post(
   "/refresh",
   validate(refreshTokenSchema),
   authController.refreshToken,
+);
+
+// POST /auth/forgot-password — request a reset token (public)
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  authController.forgotPassword,
+);
+
+// POST /auth/reset-password — submit token + new password (public)
+router.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  authController.resetPassword,
 );
 
 /**

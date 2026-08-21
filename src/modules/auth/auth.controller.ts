@@ -103,3 +103,33 @@ export function getCurrentUser(
     res.status(200).json(apiResponse(result, "User profile retrieved"));
   })().catch(next);
 }
+
+/**
+ * Request a password reset token
+ * POST /auth/forgot-password (public)
+ */
+export function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const result = await authService.forgotPassword(req.body);
+    res.status(200).json(apiResponse(result, result.message));
+  })().catch(next);
+}
+
+/**
+ * Reset password using a valid token
+ * POST /auth/reset-password (public)
+ */
+export function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const result = await authService.resetPassword(req.body);
+    res.status(200).json(apiResponse(result, result.message));
+  })().catch(next);
+}

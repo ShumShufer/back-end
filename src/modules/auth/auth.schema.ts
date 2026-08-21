@@ -59,3 +59,29 @@ export type VerifyFaydaInput = z.infer<typeof verifyFaydaSchema>;
 export const meSchema = z.object({});
 
 export type MeInput = z.infer<typeof meSchema>;
+
+// Forgot password schema
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+// Reset password schema
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Reset token is required"),
+    password: z
+      .string()
+      .regex(
+        passwordRegex,
+        "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character",
+      ),
+    passwordConfirm: z.string(),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: "Passwords do not match",
+    path: ["passwordConfirm"],
+  });
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
