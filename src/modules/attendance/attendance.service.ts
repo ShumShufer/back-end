@@ -145,3 +145,12 @@ export async function getAttendanceSessions(query: QueryAttendanceInput, actor: 
     },
   });
 }
+
+/**
+ * Full attendance sheet for a classroom: sessions + flattened records.
+ */
+export async function getClassroomAttendanceSheet(classroomId: string, actor: AuthUser) {
+  const sessions = await getAttendanceSessions({ classroomId }, actor);
+  const records = sessions.flatMap((session) => session.records);
+  return { sessions, records };
+}

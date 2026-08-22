@@ -25,6 +25,12 @@ router.get(
  * PATCH /notifications/:id/read — Mark notification as read
  */
 router.patch(
+  "/read-all",
+  authenticate,
+  notificationsController.markAllAsRead,
+);
+
+router.patch(
   "/:id/read",
   authenticate,
   notificationsController.markAsRead,

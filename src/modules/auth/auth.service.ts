@@ -26,6 +26,7 @@ export interface AuthResponse {
     lastName: string;
     role: string;
     verificationStatus: string;
+    schoolId: string | null;
   };
   accessToken: string;
   refreshToken: string;
@@ -50,7 +51,7 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
   // Check for duplicate email or phone
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ email }, { phone }],
+      OR: [{ email }, ...(phone ? [{ phone }] : [])],
     },
   });
 
@@ -73,7 +74,7 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
   const user = await prisma.user.create({
     data: {
       email,
-      phone,
+      ...(phone ? { phone } : {}),
       passwordHash,
       firstName,
       lastName,
@@ -83,15 +84,17 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     },
   });
 
-  // Generate tokens
+  // Generate tokens (schoolId rides along so scopeToSchool can authorize)
   const accessToken = signAccessToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   const refreshToken = signRefreshToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   return {
@@ -103,6 +106,7 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
       lastName: user.lastName,
       role: user.role,
       verificationStatus: user.verificationStatus,
+      schoolId: user.schoolId,
     },
     accessToken,
     refreshToken,
@@ -149,15 +153,17 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
     throw AppError.unauthorized("Invalid email/phone or password");
   }
 
-  // Generate tokens
+  // Generate tokens (schoolId rides along so scopeToSchool can authorize)
   const accessToken = signAccessToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   const refreshToken = signRefreshToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   return {
@@ -169,6 +175,7 @@ export async function login(input: LoginInput): Promise<AuthResponse> {
       lastName: user.lastName,
       role: user.role,
       verificationStatus: user.verificationStatus,
+      schoolId: user.schoolId,
     },
     accessToken,
     refreshToken,
@@ -203,12 +210,14 @@ export async function refreshTokens(
   const newAccessToken = signAccessToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   // Optionally generate new refresh token (rotate refresh token)
   const newRefreshToken = signRefreshToken({
     sub: user.id,
     role: user.role as Role,
+    schoolId: user.schoolId ?? null,
   });
 
   return {
@@ -290,6 +299,7 @@ export async function getCurrentUser(userId: string): Promise<{
   lastName: string;
   role: string;
   verificationStatus: string;
+  schoolId: string | null;
 }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -307,6 +317,7 @@ export async function getCurrentUser(userId: string): Promise<{
     lastName: user.lastName,
     role: user.role,
     verificationStatus: user.verificationStatus,
+    schoolId: user.schoolId,
   };
 }
 

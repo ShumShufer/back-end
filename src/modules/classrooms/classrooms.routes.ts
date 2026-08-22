@@ -73,4 +73,17 @@ router.delete(
   classroomsController.removeMentor,
 );
 
+
+// Sub-router mounted at /classrooms/:id (mergeParams) — classroom-scoped reads
+export const classroomStudentsRouter = Router({ mergeParams: true });
+
+/**
+ * GET /classrooms/:id/students — accepted students of a classroom
+ */
+classroomStudentsRouter.get(
+  "/students",
+  authenticate,
+  classroomsController.getClassroomStudents,
+);
+
 export default router;

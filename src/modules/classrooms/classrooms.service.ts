@@ -268,3 +268,21 @@ export async function removeMentor(classroomId: string, mentorId: string) {
 
   return { message: "Mentor removed from classroom successfully" };
 }
+
+/**
+ * Students accepted into a classroom (via ACCEPTED enrollments).
+ */
+export async function getClassroomStudents(classroomId: string) {
+  const classroom = await prisma.classroom.findUnique({ where: { id: classroomId } });
+  if (!classroom) throw AppError.notFound("Classroom not found");
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: { classroomId, status: "ACCEPTED" },
+    include: {
+      student: { select: { id: true, firstName: true, lastName: true, email: true, avatarUrl: true } },
+    },
+    orderBy: { submittedAt: "asc" },
+  });
+
+  return enrollments.map((e) => e.student);
+}

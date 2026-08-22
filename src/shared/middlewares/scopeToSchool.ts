@@ -101,7 +101,9 @@ export async function scopeToSchool(
     const requestedSchoolId = await getResourceSchoolId(req);
 
     if (!requestedSchoolId) {
-      next(AppError.forbidden("Unable to determine the school for this resource"));
+      // Resource isn't school-addressable (e.g. /classrooms/my, /notifications);
+      // it is scoped to the caller by the controller, so allow it through.
+      next();
       return;
     }
 

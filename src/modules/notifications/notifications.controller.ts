@@ -48,3 +48,15 @@ export async function createNotification(req: Request, res: Response, next: Next
     next(err);
   }
 }
+
+/**
+ * PATCH /notifications/read-all — mark all as read for the current user
+ */
+export async function markAllAsRead(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await notificationsService.markAllAsRead((req.user as AuthUser).id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}

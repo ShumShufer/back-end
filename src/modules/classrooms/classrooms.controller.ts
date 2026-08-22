@@ -132,3 +132,16 @@ export function removeMentor(
       .json(apiResponse(result, "Mentor removed from classroom successfully", 200));
   })().catch(next);
 }
+
+/**
+ * GET /classrooms/:id/students — students accepted into the classroom
+ */
+export async function getClassroomStudents(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const students = await classroomsService.getClassroomStudents(id as string);
+    res.json(apiResponse(students, "Classroom students retrieved"));
+  } catch (err) {
+    next(err);
+  }
+}

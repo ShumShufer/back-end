@@ -90,3 +90,14 @@ export async function createManualNotification(input: CreateNotificationInput, a
     include: { recipients: true },
   });
 }
+
+/**
+ * Mark every unread notification of the actor as read.
+ */
+export async function markAllAsRead(actorId: string) {
+  const result = await prisma.notificationRecipient.updateMany({
+    where: { userId: actorId, read: false },
+    data: { read: true },
+  });
+  return { updated: result.count };
+}

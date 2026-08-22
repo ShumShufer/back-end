@@ -7,7 +7,16 @@ export const attendanceRecordItemSchema = z.object({
 
 export const createAttendanceSessionSchema = z.object({
   classroomId: z.string().uuid(),
-  date: z.string().datetime().optional(),
+  // Accepts a full ISO datetime or a plain calendar date (YYYY-MM-DD).
+  date: z
+    .string()
+    .refine(
+      (value) =>
+        z.string().datetime().safeParse(value).success ||
+        /^\d{4}-\d{2}-\d{2}$/.test(value),
+      "Expected an ISO datetime or YYYY-MM-DD date",
+    )
+    .optional(),
   records: z.array(attendanceRecordItemSchema).optional(),
 });
 

@@ -53,3 +53,16 @@ export async function recordBulkAttendance(req: Request, res: Response, next: Ne
     next(err);
   }
 }
+
+/**
+ * GET /classrooms/:id/attendance — full sheet (sessions + records)
+ */
+export async function getClassroomAttendance(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const sheet = await attendanceService.getClassroomAttendanceSheet(id as string, req.user as AuthUser);
+    res.json(sheet);
+  } catch (err) {
+    next(err);
+  }
+}

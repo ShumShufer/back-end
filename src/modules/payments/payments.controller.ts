@@ -75,3 +75,16 @@ export async function getSchoolRevenue(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
+
+/**
+ * GET /payments/:id
+ */
+export async function getPaymentById(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const payment = await paymentsService.getPaymentById(id as string, req.user as AuthUser);
+    res.json(payment);
+  } catch (err) {
+    next(err);
+  }
+}

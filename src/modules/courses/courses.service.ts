@@ -369,3 +369,28 @@ export async function getRecommendedCourses(actor: AuthUser) {
   return recommended;
 }
 
+/**
+ * Courses linked to a classroom, ordered by ClassroomCourse.order.
+ */
+export async function getClassroomCourses(classroomId: string) {
+  const classroom = await prisma.classroom.findUnique({ where: { id: classroomId } });
+  if (!classroom) throw AppError.notFound("Classroom not found");
+
+  const links = await prisma.classroomCourse.findMany({
+    where: { classroomId },
+    orderBy: { order: "asc" },
+    include: {
+      course: {
+        include: {
+          _count: { select: { topics: true } },
+        },
+      },
+    },
+  });
+
+  return links.map((link) => ({
+    course: link.course,
+    order: link.order,
+    mandatory: link.mandatory,
+  }));
+}

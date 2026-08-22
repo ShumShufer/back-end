@@ -203,4 +203,15 @@ export async function getRecommendedCourses(req: Request, res: Response, next: N
   }
 }
 
-
+/**
+ * GET /classrooms/:id/courses — courses linked to a classroom
+ */
+export async function getClassroomCourses(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const links = await coursesService.getClassroomCourses(id as string);
+    res.json(links);
+  } catch (err) {
+    next(err);
+  }
+}

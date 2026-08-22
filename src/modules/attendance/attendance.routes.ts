@@ -39,3 +39,15 @@ router.post(
 );
 
 export default router;
+
+// Sub-router mounted at /classrooms/:id (mergeParams)
+export const classroomAttendanceRouter = Router({ mergeParams: true });
+
+/**
+ * GET /classrooms/:id/attendance
+ */
+classroomAttendanceRouter.get(
+  "/attendance",
+  authenticate,
+  attendanceController.getClassroomAttendance,
+);

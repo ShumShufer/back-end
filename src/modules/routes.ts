@@ -22,6 +22,16 @@ import notificationsRoutes from "./notifications/notifications.routes.js";
 import { schoolReviewsRouter } from "./reviews/reviews.routes.js";
 import { classroomReportsRouter } from "./reports/reports.routes.js";
 import adminRoutes from "./admin/admin.routes.js";
+import announcementsRoutes, {
+  schoolAnnouncementsRouter,
+  classroomAnnouncementsRouter,
+} from "./announcements/announcements.routes.js";
+import { classroomStudentsRouter } from "./classrooms/classrooms.routes.js";
+import { classroomAttendanceRouter } from "./attendance/attendance.routes.js";
+import resourcesRouter from "./resources/resources.routes.js";
+import { classroomCoursesRouter } from "./courses/courses.routes.js";
+import studentsRoutes from "./students/students.routes.js";
+import statsRoutes from "./stats/stats.routes.js";
 import * as adminController from "./admin/admin.controller.js";
 import * as paymentsController from "./payments/payments.controller.js";
 import { authenticate } from "../shared/middlewares/authenticate.js";
@@ -54,6 +64,10 @@ router.use("/schools/:id", schoolEnrollmentRouter);
 // Staff posts + staff applications inbox nested under a school
 router.use("/schools/:id", schoolStaffRouter);
 
+// Announcements — platform feed + school-nested feeds
+router.use("/announcements", announcementsRoutes);
+router.use("/schools/:id", schoolAnnouncementsRouter);
+
 /**
  * Branches — standalone operations on a branch by its own ID
  * GET /branches/:id, PATCH /branches/:id, DELETE /branches/:id
@@ -64,6 +78,13 @@ router.use("/branches", branchesRoutes);
  * Classrooms — role-aware listing, detail, create, update, mentor management
  */
 router.use("/classrooms", classroomsRoutes);
+router.use("/classrooms/:id", resourcesRouter);
+router.use("/classrooms/:id", classroomStudentsRouter);
+router.use("/classrooms/:id", classroomAttendanceRouter);
+router.use("/classrooms/:id", classroomAnnouncementsRouter);
+router.use("/classrooms/:id", classroomCoursesRouter);
+router.use("/students", studentsRoutes);
+router.use("/stats", statsRoutes);
 
 /**
  * Courses — public catalog, topic management, price recommendation

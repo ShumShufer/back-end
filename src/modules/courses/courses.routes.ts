@@ -103,3 +103,14 @@ router.post(
 
 export default router;
 
+// Sub-router mounted at /classrooms/:id (mergeParams)
+export const classroomCoursesRouter = Router({ mergeParams: true });
+
+/**
+ * GET /classrooms/:id/courses
+ */
+classroomCoursesRouter.get(
+  "/courses",
+  authenticate,
+  coursesController.getClassroomCourses,
+);

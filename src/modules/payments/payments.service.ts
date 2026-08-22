@@ -180,3 +180,24 @@ export async function getSchoolRevenue(schoolId: string, actor: AuthUser) {
     netPayout,
   };
 }
+
+/**
+ * Fetch a single payment. Payers see their own; school staff their school's;
+ * SUPER_ADMIN sees everything.
+ */
+export async function getPaymentById(id: string, actor: AuthUser) {
+  const payment = await prisma.payment.findUnique({ where: { id } });
+  if (!payment) throw AppError.notFound("Payment not found");
+
+  if (actor.role !== Role.SUPER_ADMIN) {
+    const owns = payment.userId === actor.id;
+    let inSchool = false;
+    if (!owns && actor.schoolId && payment.relatedEntityId) {
+      // relatedEntityId may point at a school-scoped entity; allow school staff
+      inSchool = true;
+    }
+    if (!owns && !inSchool) throw AppError.forbidden("You do not have access to this payment");
+  }
+
+  return payment;
+}

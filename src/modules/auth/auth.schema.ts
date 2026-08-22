@@ -14,7 +14,8 @@ export const registerSchema = z
       .regex(
         phoneRegex,
         "Invalid phone number. Use Ethiopian format (e.g., 0911223344)",
-      ),
+      )
+      .optional(),
     password: z
       .string()
       .regex(
