@@ -110,10 +110,27 @@ model User {
   reportsFiled      StudentReport[]       @relation("ReportedBy")
   reportsReceived   StudentReport[]       @relation("ReportedStudent")
 
+  passwordResetTokens PasswordResetToken[]
+
   @@index([schoolId])
   @@index([role])
   @@map("users")
 }
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
 
 model School {
   id          String   @id @default(uuid())

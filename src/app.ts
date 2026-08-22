@@ -4,12 +4,12 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
-import router from "./routes/index.js";
-import { errorHandler } from "./middlewares/errorHandler.js";
-import { notFound } from "./middlewares/notFound.js";
-import { rateLimiter } from "./middlewares/rateLimiter.js";
-import { requestLogger } from "./middlewares/requestLogger.js";
-import { securityHeaders } from "./middlewares/securityHeaders.js";
+import router from "./modules/routes.js";
+import { errorHandler } from "./shared/middlewares/errorHandler.js";
+import { notFound } from "./shared/middlewares/notFound.js";
+import { rateLimiter } from "./shared/middlewares/rateLimiter.js";
+import { requestLogger } from "./shared/middlewares/requestLogger.js";
+import { securityHeaders } from "./shared/middlewares/securityHeaders.js";
 
 const app: Express = express();
 
