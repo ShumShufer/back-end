@@ -8,6 +8,23 @@ import type {
 } from "./branch.schema.js";
 
 /**
+ * Get all branches across the platform (Public)
+ * GET /branches
+ */
+export function getAllBranches(
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const result = await branchesService.getAllBranches();
+    res
+      .status(200)
+      .json(apiResponse(result, "Branches retrieved successfully", 200));
+  })().catch(next);
+}
+
+/**
  * Get all branches for a school (Public)
  * GET /schools/:id/branches
  */

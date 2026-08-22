@@ -7,6 +7,15 @@ import type {
 } from "./branch.schema.js";
 
 /**
+ * Get all branches across every school (Public)
+ */
+export async function getAllBranches() {
+  return prisma.branch.findMany({
+    orderBy: { name: "asc" },
+  });
+}
+
+/**
  * Get all branches for a specific school
  */
 export async function getBranchesBySchoolId(schoolId: string) {

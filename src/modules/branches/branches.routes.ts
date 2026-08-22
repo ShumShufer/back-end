@@ -17,6 +17,9 @@ import { Role } from "../../shared/types/auth.types.js";
  */
 const router = Router();
 
+// GET /branches — public list of every branch across all schools
+router.get("/", branchesController.getAllBranches);
+
 // GET /branches/nearby — public geographic search by lat/lng/radius
 // Must be defined before /:id to prevent "nearby" being treated as a branch ID
 router.get(
@@ -56,12 +59,12 @@ export default router;
 export const schoolBranchRouter = Router({ mergeParams: true });
 
 // GET /schools/:id/branches — public list of branches for a school
-schoolBranchRouter.get("/", branchesController.getBranchesBySchoolId);
+schoolBranchRouter.get("/branches", branchesController.getBranchesBySchoolId);
 
 // POST /schools/:id/branches — ADMIN only, creates a branch under this school
 // scopeToSchool resolves the parent school ID to enforce school ownership
 schoolBranchRouter.post(
-  "/",
+  "/branches",
   authenticate,
   authorize(Role.ADMIN),
   scopeToSchool,
