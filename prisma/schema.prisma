@@ -1,0 +1,538 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDUCATION_HEAD
+  MENTOR
+  STUDENT
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ApplicationMode {
+  ONLINE
+  IN_PERSON
+}
+
+enum ScheduleScope {
+  SCHOOL
+  CLASSROOM
+}
+
+enum TaskType {
+  ASSIGNMENT
+  QUIZ
+  EXAM
+}
+
+enum CoursePassStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PASSED
+  FAILED
+  RETAKE_REQUIRED
+}
+
+enum PaymentType {
+  ENROLLMENT
+  COURSE_PURCHASE
+  PRACTICE_ELSEWHERE_FEE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum NotificationTopic {
+  SCHOOL_ANNOUNCEMENT
+  STAFF_POST
+  CLASSROOM
+  APPLICATION
+  TASK
+  RESULT
+  PAYMENT
+  SYSTEM
+}
+
+// ─── Models ─────────────────────────────────────────────
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  phone              String?            @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  role               Role
+  faydaId            String?            @unique
+  verificationStatus VerificationStatus @default(PENDING)
+  dateOfBirth        DateTime
+  avatarUrl          String?
+  schoolId           String?
+  school             School?            @relation(fields: [schoolId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  enrollments       Enrollment[]
+  mentorClassrooms  ClassroomMentor[]
+  submissions       Submission[]
+  attendanceRecords AttendanceRecord[]
+  notifications     NotificationRecipient[]
+  payments          Payment[]
+  reviews           Review[]              @relation("ReviewStudent")
+  reportsFiled      StudentReport[]       @relation("ReportedBy")
+  reportsReceived   StudentReport[]       @relation("ReportedStudent")
+
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([schoolId])
+  @@index([role])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+
+model School {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  rating      Float    @default(0)
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+
+  branches      Branch[]
+  users         User[]
+  courses       Course[]
+  classrooms    Classroom[]
+  applications  Enrollment[]
+  staffPosts    StaffApplicationPost[]
+  agreementsA   SchoolAgreement[]      @relation("SchoolA")
+  agreementsB   SchoolAgreement[]      @relation("SchoolB")
+  reviews       Review[]
+  schedules     ScheduleEvent[]
+  announcements Announcement[]
+
+  @@map("schools")
+}
+
+model Branch {
+  id        String @id @default(uuid())
+  schoolId  String
+  school    School @relation(fields: [schoolId], references: [id])
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+
+  @@index([schoolId])
+  @@map("branches")
+}
+
+model SchoolAgreement {
+  id        String   @id @default(uuid())
+  schoolAId String
+  schoolBId String
+  schoolA   School   @relation("SchoolA", fields: [schoolAId], references: [id])
+  schoolB   School   @relation("SchoolB", fields: [schoolBId], references: [id])
+  status    String   @default("PENDING")
+  feeSplit  Json?
+  createdAt DateTime @default(now())
+
+  @@index([schoolAId])
+  @@index([schoolBId])
+  @@map("school_agreements")
+}
+
+model PracticeElsewhereRequest {
+  id           String   @id @default(uuid())
+  studentId    String
+  homeSchoolId String
+  hostSchoolId String
+  status       String   @default("PENDING")
+  fee          Decimal
+  createdAt    DateTime @default(now())
+
+  @@index([studentId])
+  @@map("practice_elsewhere_requests")
+}
+
+model Classroom {
+  id        String   @id @default(uuid())
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+
+  mentors            ClassroomMentor[]
+  students           Enrollment[]
+  courses            ClassroomCourse[]
+  announcements      Announcement[]
+  resources          Resource[]
+  tasks              Task[]
+  schedules          ScheduleEvent[]
+  attendanceSessions AttendanceSession[]
+
+  @@index([schoolId])
+  @@map("classrooms")
+}
+
+model ClassroomMentor {
+  classroomId String
+  mentorId    String
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  mentor      User      @relation(fields: [mentorId], references: [id])
+
+  @@id([classroomId, mentorId])
+  @@map("classroom_mentors")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  schoolId    String?
+  school      School?  @relation(fields: [schoolId], references: [id])
+  title       String
+  description String?
+  price       Decimal
+  isFree      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  topics         Topic[]
+  classroomLinks ClassroomCourse[]
+
+  @@index([schoolId])
+  @@map("courses")
+}
+
+model ClassroomCourse {
+  classroomId String
+  courseId     String
+  order       Int
+  mandatory   Boolean   @default(true)
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  course      Course    @relation(fields: [courseId], references: [id])
+
+  @@id([classroomId, courseId])
+  @@map("classroom_courses")
+}
+
+model Topic {
+  id        String  @id @default(uuid())
+  courseId   String
+  course    Course  @relation(fields: [courseId], references: [id])
+  title     String
+  order     Int
+  videoUrl  String?
+  content   String?
+
+  resources Resource[]
+  quizzes   Quiz[]
+
+  @@index([courseId])
+  @@map("topics")
+}
+
+model Quiz {
+  id        String  @id @default(uuid())
+  topicId   String?
+  topic     Topic?  @relation(fields: [topicId], references: [id])
+  title     String
+  questions Json
+  passScore Int
+
+  @@index([topicId])
+  @@map("quizzes")
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  createdById String
+  type        TaskType
+  title       String
+  description String?
+  attachments String[]
+  deadline    DateTime
+  createdAt   DateTime  @default(now())
+
+  submissions Submission[]
+
+  @@index([classroomId])
+  @@map("tasks")
+}
+
+model Submission {
+  id          String    @id @default(uuid())
+  taskId      String
+  studentId   String
+  task        Task      @relation(fields: [taskId], references: [id])
+  student     User      @relation(fields: [studentId], references: [id])
+  attachments String[]
+  submittedAt DateTime  @default(now())
+  grade       Float?
+  feedback    String?
+  gradedAt    DateTime?
+
+  @@index([taskId])
+  @@index([studentId])
+  @@map("submissions")
+}
+
+model CourseResult {
+  id             String           @id @default(uuid())
+  studentId      String
+  courseId        String
+  classroomId    String
+  status         CoursePassStatus @default(NOT_STARTED)
+  finalExamScore Float?
+  publishedAt    DateTime?
+
+  @@index([studentId])
+  @@index([courseId])
+  @@map("course_results")
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  topicId     String?
+  topic       Topic?     @relation(fields: [topicId], references: [id])
+  title       String
+  type        String
+  url         String
+  mandatory   Boolean  @default(false)
+  uploadedAt  DateTime @default(now())
+
+  @@index([classroomId])
+  @@index([topicId])
+  @@map("resources")
+}
+
+model AttendanceSession {
+  id          String    @id @default(uuid())
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  date        DateTime
+
+  records AttendanceRecord[]
+
+  @@index([classroomId])
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id        String            @id @default(uuid())
+  sessionId String
+  studentId String
+  session   AttendanceSession @relation(fields: [sessionId], references: [id])
+  student   User              @relation(fields: [studentId], references: [id])
+  status    String
+
+  @@index([sessionId])
+  @@index([studentId])
+  @@map("attendance_records")
+}
+
+model StudentReport {
+  id                String   @id @default(uuid())
+  classroomId       String
+  reportedById      String
+  reportedStudentId String
+  reportedBy        User     @relation("ReportedBy", fields: [reportedById], references: [id])
+  reportedStudent   User     @relation("ReportedStudent", fields: [reportedStudentId], references: [id])
+  note              String
+  createdAt         DateTime @default(now())
+
+  @@index([classroomId])
+  @@map("student_reports")
+}
+
+model ScheduleEvent {
+  id            String        @id @default(uuid())
+  schoolId      String?
+  school        School?       @relation(fields: [schoolId], references: [id])
+  classroomId   String?
+  classroom     Classroom?    @relation(fields: [classroomId], references: [id])
+  scope         ScheduleScope
+  createdByRole Role
+  title         String
+  startTime     DateTime
+  endTime       DateTime
+  location      String?
+
+  @@index([schoolId])
+  @@index([classroomId])
+  @@map("schedule_events")
+}
+
+model Announcement {
+  id          String     @id @default(uuid())
+  schoolId    String?
+  school      School?    @relation(fields: [schoolId], references: [id])
+  classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  authorId    String
+  title       String
+  body        String
+  audience    String
+  createdAt   DateTime   @default(now())
+
+  @@index([schoolId])
+  @@index([classroomId])
+  @@map("announcements")
+}
+
+model Enrollment {
+  id            String            @id @default(uuid())
+  studentId     String
+  student       User              @relation(fields: [studentId], references: [id])
+  schoolId      String
+  school        School            @relation(fields: [schoolId], references: [id])
+  classroomId   String?
+  classroom     Classroom?        @relation(fields: [classroomId], references: [id])
+  mode          ApplicationMode
+  status        ApplicationStatus @default(PENDING)
+  formResponses Json
+  submittedAt   DateTime          @default(now())
+  reviewedAt    DateTime?
+  reviewedById  String?
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@map("enrollments")
+}
+
+model ApplicationFormTemplate {
+  id       String @id @default(uuid())
+  schoolId String
+  fields   Json
+
+  @@index([schoolId])
+  @@map("application_form_templates")
+}
+
+model StaffApplicationPost {
+  id          String             @id @default(uuid())
+  schoolId    String
+  school      School             @relation(fields: [schoolId], references: [id])
+  role        Role
+  description String
+  status      String             @default("OPEN")
+  createdAt   DateTime           @default(now())
+
+  applications StaffApplication[]
+
+  @@index([schoolId])
+  @@map("staff_application_posts")
+}
+
+model StaffApplication {
+  id          String               @id @default(uuid())
+  postId      String
+  applicantId String
+  post        StaffApplicationPost @relation(fields: [postId], references: [id])
+  status      ApplicationStatus    @default(PENDING)
+  resumeUrl   String?
+  submittedAt DateTime             @default(now())
+
+  @@index([postId])
+  @@map("staff_applications")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  type            PaymentType
+  amount          Decimal
+  commission      Decimal
+  status          PaymentStatus @default(PENDING)
+  chapaTxRef      String?       @unique
+  relatedEntityId String?
+  createdAt       DateTime      @default(now())
+
+  @@index([userId])
+  @@map("payments")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  schoolId  String
+  studentId String
+  school    School   @relation(fields: [schoolId], references: [id])
+  student   User     @relation("ReviewStudent", fields: [studentId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@map("reviews")
+}
+
+model Notification {
+  id              String            @id @default(uuid())
+  topic           NotificationTopic
+  title           String
+  body            String
+  relatedEntityId String?
+  createdAt       DateTime          @default(now())
+
+  recipients NotificationRecipient[]
+
+  @@map("notifications")
+}
+
+model NotificationRecipient {
+  id             String       @id @default(uuid())
+  notificationId String
+  userId         String
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  read           Boolean      @default(false)
+
+  @@index([notificationId])
+  @@index([userId])
+  @@map("notification_recipients")
+}
