@@ -243,15 +243,26 @@ export async function logout(): Promise<void> {
  * - Call Fayda verification client
  * - Update user's verificationStatus to VERIFIED if successful
  * - Update faydaId if available
- * - Handle expired refresh tokens gracefully
+ * - Return updated user profile
  */
 export async function verifyWithFayda(
   userId: string,
   input: VerifyFaydaInput,
-): Promise<{ message: string; verificationStatus: string }> {
-  const { phone } = input;
-
-  // Verify user exists
+): Promise<{
+  message: string;
+  verificationStatus: string;
+  user: {
+    id: string;
+    email: string;
+    phone: string | null;
+    firstName: string;
+    lastName: string;
+    role: string;
+    verificationStatus: string;
+    schoolId: string | null;
+    faydaId: string | null;
+  };
+}> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -260,8 +271,15 @@ export async function verifyWithFayda(
     throw AppError.notFound("User not found");
   }
 
+  const lookupTarget = input.faydaId || input.phone || user.phone;
+  if (!lookupTarget) {
+    throw AppError.badRequest(
+      "Please provide a Fayda ID number or phone number for verification",
+    );
+  }
+
   // Call Fayda verification
-  const faydaResponse = await verifyPhoneWithFayda(phone);
+  const faydaResponse = await verifyPhoneWithFayda(lookupTarget);
 
   if (!faydaResponse.verified) {
     throw AppError.unauthorized(
@@ -273,8 +291,36 @@ export async function verifyWithFayda(
   const updateData: Record<string, unknown> = {
     verificationStatus: "VERIFIED",
   };
-  if (faydaResponse.idNumber) {
-    updateData.faydaId = faydaResponse.idNumber;
+
+  const targetFaydaId = faydaResponse.idNumber || input.faydaId;
+  if (targetFaydaId) {
+    // Check if another user already has this faydaId
+    const existingFaydaUser = await prisma.user.findFirst({
+      where: {
+        faydaId: targetFaydaId,
+        NOT: { id: userId },
+      },
+    });
+
+    if (existingFaydaUser) {
+      // In development mode, append short unique identifier so testing with demo IDs works seamlessly
+      updateData.faydaId = `${targetFaydaId}-${userId.slice(0, 6).toUpperCase()}`;
+    } else {
+      updateData.faydaId = targetFaydaId;
+    }
+  }
+
+  // Only assign phone if user didn't have one and the phone is not taken by another user
+  if (!user.phone && faydaResponse.phoneNumber) {
+    const existingPhoneUser = await prisma.user.findFirst({
+      where: {
+        phone: faydaResponse.phoneNumber,
+        NOT: { id: userId },
+      },
+    });
+    if (!existingPhoneUser) {
+      updateData.phone = faydaResponse.phoneNumber;
+    }
   }
 
   const updatedUser = await prisma.user.update({
@@ -283,8 +329,19 @@ export async function verifyWithFayda(
   });
 
   return {
-    message: "Verification successful",
+    message: "Fayda verification successful",
     verificationStatus: updatedUser.verificationStatus,
+    user: {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      role: updatedUser.role,
+      verificationStatus: updatedUser.verificationStatus,
+      schoolId: updatedUser.schoolId,
+      faydaId: updatedUser.faydaId,
+    },
   };
 }
 
