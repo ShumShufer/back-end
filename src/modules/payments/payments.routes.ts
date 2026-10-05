@@ -21,15 +21,18 @@ router.post(
  * GET /payments/verify/:txRef — Verify a payment by transaction reference
  */
 router.get(
-  "/:id",
-  authenticate,
-  paymentsController.getPaymentById,
-);
-
-router.get(
   "/verify/:txRef",
   authenticate,
   paymentsController.verifyPayment,
+);
+
+/**
+ * GET /payments/:id — Get payment details by ID
+ */
+router.get(
+  "/:id",
+  authenticate,
+  paymentsController.getPaymentById,
 );
 
 /**

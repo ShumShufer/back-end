@@ -49,10 +49,15 @@ export const refreshTokenSchema = z.object({
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 
 // Verify Fayda schema
-export const verifyFaydaSchema = z.object({
-  phone: z.string().regex(phoneRegex, "Invalid phone number"),
-  verificationCode: z.string().min(1, "Verification code is required"),
-});
+export const verifyFaydaSchema = z
+  .object({
+    phone: z.string().regex(phoneRegex, "Invalid phone number").optional(),
+    faydaId: z.string().min(4, "Fayda ID must be at least 4 characters").optional(),
+    verificationCode: z.string().optional(),
+  })
+  .refine((data) => Boolean(data.phone || data.faydaId), {
+    message: "Either phone number or Fayda ID is required for verification",
+  });
 
 export type VerifyFaydaInput = z.infer<typeof verifyFaydaSchema>;
 
