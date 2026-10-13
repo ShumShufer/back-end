@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as resourcesService from "./resources.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type { CreateResourceInput } from "./resources.schema.js";
 
@@ -10,7 +11,7 @@ export async function getResources(req: Request, res: Response, next: NextFuncti
   try {
     const { id } = req.params;
     const resources = await resourcesService.getResources(id as string);
-    res.json(resources);
+    res.json(apiResponse(resources, "Classroom resources retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -27,7 +28,7 @@ export async function createResource(req: Request, res: Response, next: NextFunc
       req.body as CreateResourceInput,
       req.user as AuthUser,
     );
-    res.status(201).json(resource);
+    res.status(201).json(apiResponse(resource, "Resource uploaded successfully", 201));
   } catch (err) {
     next(err);
   }
