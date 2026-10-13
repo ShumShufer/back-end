@@ -68,3 +68,22 @@ router.get(
 );
 
 export default router;
+
+// Sub-router mounted at /classrooms/:id (mergeParams)
+export const classroomTasksRouter = Router({ mergeParams: true });
+
+// GET /classrooms/:id/tasks
+classroomTasksRouter.get(
+  "/tasks",
+  authenticate,
+  tasksController.getClassroomTasks,
+);
+
+// POST /classrooms/:id/tasks — create task
+classroomTasksRouter.post(
+  "/tasks",
+  authenticate,
+  authorize(Role.MENTOR, Role.EDUCATION_HEAD, Role.ADMIN, Role.SUPER_ADMIN),
+  validate(createTaskSchema.omit({ classroomId: true })),
+  tasksController.createClassroomTask,
+);
