@@ -91,3 +91,33 @@ export const resetPasswordSchema = z
   });
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+// Register School Representative schema
+export const registerSchoolRepSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    phone: z
+      .string()
+      .regex(
+        phoneRegex,
+        "Invalid phone number. Use Ethiopian format (e.g., 0911223344)",
+      )
+      .optional(),
+    password: z
+      .string()
+      .regex(
+        passwordRegex,
+        "Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character",
+      ),
+    passwordConfirm: z.string(),
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    schoolName: z.string().min(2, "School name must be at least 2 characters"),
+    schoolDescription: z.string().optional(),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: "Passwords do not match",
+    path: ["passwordConfirm"],
+  });
+
+export type RegisterSchoolRepInput = z.infer<typeof registerSchoolRepSchema>;
+

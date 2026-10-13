@@ -10,6 +10,7 @@ import {
 import { verifyWithFayda as verifyPhoneWithFayda } from "../../shared/helpers/faydaClient.js";
 import type {
   RegisterInput,
+  RegisterSchoolRepInput,
   LoginInput,
   VerifyFaydaInput,
   ForgotPasswordInput,
@@ -107,6 +108,93 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
       role: user.role,
       verificationStatus: user.verificationStatus,
       schoolId: user.schoolId,
+    },
+    accessToken,
+    refreshToken,
+  };
+}
+
+/**
+ * Register a new school representative + pending School record
+ * In a transaction:
+ * - Create School with status "PENDING_APPROVAL"
+ * - Create User with role "ADMIN", associated to schoolId
+ * - Issue auth tokens
+ */
+export async function registerSchoolRep(input: RegisterSchoolRepInput): Promise<AuthResponse & { school: { id: string; name: string; status: string } }> {
+  const { email, phone, password, fullName, schoolName, schoolDescription } = input;
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, ...(phone ? [{ phone }] : [])],
+    },
+  });
+
+  if (existingUser) {
+    if (existingUser.email === email) {
+      throw AppError.conflict("Email already registered");
+    }
+    throw AppError.conflict("Phone number already registered");
+  }
+
+  const passwordHash = await hashPassword(password);
+  const nameParts = fullName.trim().split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
+  const result = await prisma.$transaction(async (tx) => {
+    const school = await tx.school.create({
+      data: {
+        name: schoolName,
+        description: schoolDescription ?? null,
+        status: "PENDING_APPROVAL",
+      },
+    });
+
+    const user = await tx.user.create({
+      data: {
+        email,
+        ...(phone ? { phone } : {}),
+        passwordHash,
+        firstName,
+        lastName,
+        role: "ADMIN",
+        schoolId: school.id,
+        dateOfBirth: new Date(),
+        verificationStatus: "PENDING",
+      },
+    });
+
+    return { user, school };
+  });
+
+  const accessToken = signAccessToken({
+    sub: result.user.id,
+    role: result.user.role as Role,
+    schoolId: result.school.id,
+  });
+
+  const refreshToken = signRefreshToken({
+    sub: result.user.id,
+    role: result.user.role as Role,
+    schoolId: result.school.id,
+  });
+
+  return {
+    user: {
+      id: result.user.id,
+      email: result.user.email,
+      phone: result.user.phone,
+      firstName: result.user.firstName,
+      lastName: result.user.lastName,
+      role: result.user.role,
+      verificationStatus: result.user.verificationStatus,
+      schoolId: result.user.schoolId,
+    },
+    school: {
+      id: result.school.id,
+      name: result.school.name,
+      status: result.school.status,
     },
     accessToken,
     refreshToken,
