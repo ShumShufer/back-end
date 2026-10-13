@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as adminService from "./admin.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 
 /**
@@ -9,7 +10,20 @@ import type { AuthUser } from "../../shared/types/auth.types.js";
 export async function getSuperAdminDashboard(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await adminService.getSuperAdminDashboard(req.user as AuthUser);
-    res.json(result);
+    res.json(apiResponse(result, "Super admin dashboard retrieved"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /admin/commission-overview
+ * Platform-wide revenue & commission report for SUPER_ADMIN.
+ */
+export async function getCommissionOverview(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await adminService.getCommissionOverview(req.user as AuthUser);
+    res.json(apiResponse(result, "Commission overview retrieved"));
   } catch (err) {
     next(err);
   }
@@ -23,7 +37,7 @@ export async function getSchoolDashboard(req: Request, res: Response, next: Next
   try {
     const { id } = req.params;
     const result = await adminService.getSchoolDashboard(id as string, req.user as AuthUser);
-    res.json(result);
+    res.json(apiResponse(result, "School dashboard retrieved"));
   } catch (err) {
     next(err);
   }
@@ -37,7 +51,7 @@ export async function getMentorDashboard(req: Request, res: Response, next: Next
   try {
     const { id } = req.params;
     const result = await adminService.getMentorDashboard(id as string, req.user as AuthUser);
-    res.json(result);
+    res.json(apiResponse(result, "Mentor dashboard retrieved"));
   } catch (err) {
     next(err);
   }
@@ -51,7 +65,7 @@ export async function getEducationHeadDashboard(req: Request, res: Response, nex
   try {
     const { id } = req.params;
     const result = await adminService.getEducationHeadDashboard(id as string, req.user as AuthUser);
-    res.json(result);
+    res.json(apiResponse(result, "Education head dashboard retrieved"));
   } catch (err) {
     next(err);
   }

@@ -357,3 +357,58 @@ function groupByMonth(items: { date: Date; count: number }[]) {
     .slice(-6)
     .map(([month, count]) => ({ month, count }));
 }
+
+/**
+ * GET /admin/commission-overview
+ * Platform-wide revenue, payments count, and total commission breakdown for SUPER_ADMIN.
+ */
+export async function getCommissionOverview(actor: AuthUser) {
+  if (actor.role !== Role.SUPER_ADMIN) {
+    throw AppError.forbidden("Only Super Admins can view commission overview");
+  }
+
+  const [aggregate, byType, byStatus, recentPayments] = await Promise.all([
+    prisma.payment.aggregate({
+      where: { status: "SUCCESS" },
+      _sum: { amount: true, commission: true },
+      _count: true,
+    }),
+    prisma.payment.groupBy({
+      by: ["type"],
+      where: { status: "SUCCESS" },
+      _sum: { amount: true, commission: true },
+      _count: true,
+    }),
+    prisma.payment.groupBy({
+      by: ["status"],
+      _count: true,
+      _sum: { amount: true },
+    }),
+    prisma.payment.findMany({
+      take: 20,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    }),
+  ]);
+
+  return {
+    totalRevenue: Number(aggregate._sum.amount ?? 0),
+    totalCommission: Number(aggregate._sum.commission ?? 0),
+    successfulTransactionsCount: aggregate._count,
+    breakdownByType: byType.map((t) => ({
+      type: t.type,
+      totalAmount: Number(t._sum.amount ?? 0),
+      totalCommission: Number(t._sum.commission ?? 0),
+      count: t._count,
+    })),
+    statusOverview: byStatus.map((s) => ({
+      status: s.status,
+      count: s._count,
+      totalAmount: Number(s._sum.amount ?? 0),
+    })),
+    recentPayments,
+  };
+}
+
