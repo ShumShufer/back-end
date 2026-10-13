@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as usersController from "./users.controller.js";
+import * as paymentsController from "../payments/payments.controller.js";
 import { authenticate } from "../../shared/middlewares/authenticate.js";
 import { authorize } from "../../shared/middlewares/authorize.js";
 import { validate } from "../../shared/middlewares/validate.js";
@@ -37,6 +38,16 @@ router.post(
 );
 
 /**
+ * GET /users/:id — User detail (Self, ADMIN, SUPER_ADMIN)
+ */
+router.get("/:id", authenticate, usersController.getUserById);
+
+/**
+ * GET /users/:id/payments — User payment history (Self, SUPER_ADMIN)
+ */
+router.get("/:id/payments", authenticate, paymentsController.getUserPayments);
+
+/**
  * PATCH /users/:id — profile / access updates (self or admins)
  */
 router.patch(
@@ -58,12 +69,19 @@ router.patch(
 );
 
 /**
- * PATCH /users/:id/assign-role — role shortcut
+ * POST /users/:id/assign-role & PATCH /users/:id/assign-role — assign/revoke roles
  */
+router.post(
+  "/:id/assign-role",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN),
+  validate(assignUserRoleSchema),
+  usersController.assignUserRole,
+);
 router.patch(
   "/:id/assign-role",
   authenticate,
-  authorize(Role.SUPER_ADMIN),
+  authorize(Role.SUPER_ADMIN, Role.ADMIN),
   validate(assignUserRoleSchema),
   usersController.assignUserRole,
 );
