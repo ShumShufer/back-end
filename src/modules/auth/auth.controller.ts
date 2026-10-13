@@ -20,6 +20,29 @@ export function register(
 }
 
 /**
+ * Register a school representative and create pending School
+ * POST /auth/register/school-rep
+ */
+export function registerSchoolRep(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const result = await authService.registerSchoolRep(req.body);
+    res
+      .status(201)
+      .json(
+        apiResponse(
+          result,
+          "School representative and school registered successfully",
+          201,
+        ),
+      );
+  })().catch(next);
+}
+
+/**
  * Login user
  * POST /auth/login
  */

@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as schedulesService from "./schedules.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type {
   CreateScheduleInput,
@@ -16,7 +17,7 @@ export async function getScheduleEvents(req: Request, res: Response, next: NextF
       req.query as unknown as QuerySchedulesInput,
       req.user as AuthUser,
     );
-    res.json(events);
+    res.json(apiResponse(events, "Schedule events retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -29,7 +30,7 @@ export async function getScheduleEventById(req: Request, res: Response, next: Ne
   try {
     const { id } = req.params;
     const event = await schedulesService.getScheduleEventById(id as string);
-    res.json(event);
+    res.json(apiResponse(event, "Schedule event retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -44,7 +45,7 @@ export async function createScheduleEvent(req: Request, res: Response, next: Nex
       req.body as CreateScheduleInput,
       req.user as AuthUser,
     );
-    res.status(201).json(event);
+    res.status(201).json(apiResponse(event, "Schedule event created successfully", 201));
   } catch (err) {
     next(err);
   }
@@ -61,7 +62,7 @@ export async function updateScheduleEvent(req: Request, res: Response, next: Nex
       req.body as UpdateScheduleInput,
       req.user as AuthUser,
     );
-    res.json(event);
+    res.json(apiResponse(event, "Schedule event updated successfully"));
   } catch (err) {
     next(err);
   }
@@ -77,7 +78,7 @@ export async function deleteScheduleEvent(req: Request, res: Response, next: Nex
       id as string,
       req.user as AuthUser,
     );
-    res.json(result);
+    res.json(apiResponse(result, "Schedule event deleted successfully"));
   } catch (err) {
     next(err);
   }

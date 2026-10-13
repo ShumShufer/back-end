@@ -51,3 +51,14 @@ classroomAttendanceRouter.get(
   authenticate,
   attendanceController.getClassroomAttendance,
 );
+
+/**
+ * POST /classrooms/:id/attendance-sessions
+ */
+classroomAttendanceRouter.post(
+  "/attendance-sessions",
+  authenticate,
+  authorize(Role.MENTOR, Role.EDUCATION_HEAD, Role.ADMIN, Role.SUPER_ADMIN),
+  validate(createAttendanceSessionSchema.omit({ classroomId: true })),
+  attendanceController.createAttendanceSession,
+);

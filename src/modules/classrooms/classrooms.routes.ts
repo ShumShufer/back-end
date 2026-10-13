@@ -24,6 +24,9 @@ router.get("/", authenticate, classroomsController.getClassrooms);
 // GET /classrooms/:id — full classroom detail, restricted to the user's school
 router.get("/:id", authenticate, scopeToSchool, classroomsController.getClassroomById);
 
+// GET /classrooms/:id/whats-new — aggregated activity feed (announcements, tasks, resources, schedules)
+router.get("/:id/whats-new", authenticate, scopeToSchool, classroomsController.getClassroomWhatsNew);
+
 /**
  * POST /classrooms — create a new classroom
  * ADMIN or EDUCATION_HEAD only; scopeToSchool prevents cross-school creation.

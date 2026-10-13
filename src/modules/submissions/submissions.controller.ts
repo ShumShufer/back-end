@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as submissionsService from "./submissions.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type {
   GradeSubmissionInput,
@@ -15,7 +16,7 @@ export async function getSubmissions(req: Request, res: Response, next: NextFunc
       req.query as unknown as QuerySubmissionsInput,
       req.user as AuthUser,
     );
-    res.json(result);
+    res.json(apiResponse(result.submissions, "Submissions retrieved successfully", 200, result.meta));
   } catch (err) {
     next(err);
   }
@@ -32,7 +33,7 @@ export async function gradeSubmission(req: Request, res: Response, next: NextFun
       req.body as GradeSubmissionInput,
       req.user as AuthUser,
     );
-    res.json(graded);
+    res.json(apiResponse(graded, "Submission graded successfully"));
   } catch (err) {
     next(err);
   }

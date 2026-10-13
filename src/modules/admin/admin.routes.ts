@@ -17,4 +17,15 @@ router.get(
   adminController.getSuperAdminDashboard,
 );
 
+/**
+ * GET /admin/commission-overview
+ * Platform-wide payments and commission breakdown.
+ */
+router.get(
+  "/commission-overview",
+  authenticate,
+  authorize(Role.SUPER_ADMIN),
+  adminController.getCommissionOverview,
+);
+
 export default router;

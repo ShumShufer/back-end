@@ -43,6 +43,22 @@ router.patch(
   agreementsController.updateAgreementStatus,
 );
 
+// PATCH /agreements/:id/accept — direct accept action
+router.patch(
+  "/:id/accept",
+  authenticate,
+  authorize(Role.ADMIN, Role.SUPER_ADMIN),
+  agreementsController.acceptAgreement,
+);
+
+// PATCH /agreements/:id/terminate — direct terminate action
+router.patch(
+  "/:id/terminate",
+  authenticate,
+  authorize(Role.ADMIN, Role.SUPER_ADMIN),
+  agreementsController.terminateAgreement,
+);
+
 /**
  * Practice-Elsewhere router export
  */
@@ -71,6 +87,22 @@ practiceRequestsRouter.patch(
   authorize(Role.ADMIN, Role.SUPER_ADMIN),
   validate(updatePracticeRequestStatusSchema),
   agreementsController.updatePracticeRequestStatus,
+);
+
+// PATCH /practice-requests/:id/approve — direct approve action
+practiceRequestsRouter.patch(
+  "/:id/approve",
+  authenticate,
+  authorize(Role.ADMIN, Role.SUPER_ADMIN),
+  agreementsController.approvePracticeRequest,
+);
+
+// PATCH /practice-requests/:id/reject — direct reject action
+practiceRequestsRouter.patch(
+  "/:id/reject",
+  authenticate,
+  authorize(Role.ADMIN, Role.SUPER_ADMIN),
+  agreementsController.rejectPracticeRequest,
 );
 
 export default router;
