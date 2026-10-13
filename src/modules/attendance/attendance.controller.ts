@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as attendanceService from "./attendance.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type {
   CreateAttendanceSessionInput,
@@ -16,7 +17,7 @@ export async function getAttendanceSessions(req: Request, res: Response, next: N
       req.query as unknown as QueryAttendanceInput,
       req.user as AuthUser,
     );
-    res.json(sessions);
+    res.json(apiResponse(sessions, "Attendance sessions retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -27,11 +28,15 @@ export async function getAttendanceSessions(req: Request, res: Response, next: N
  */
 export async function createAttendanceSession(req: Request, res: Response, next: NextFunction) {
   try {
+    const input = {
+      ...req.body,
+      classroomId: req.body.classroomId || req.params.id,
+    };
     const session = await attendanceService.createAttendanceSession(
-      req.body as CreateAttendanceSessionInput,
+      input as CreateAttendanceSessionInput,
       req.user as AuthUser,
     );
-    res.status(201).json(session);
+    res.status(201).json(apiResponse(session, "Attendance session created successfully", 201));
   } catch (err) {
     next(err);
   }
@@ -48,7 +53,7 @@ export async function recordBulkAttendance(req: Request, res: Response, next: Ne
       req.body as RecordAttendanceBulkInput,
       req.user as AuthUser,
     );
-    res.json(session);
+    res.json(apiResponse(session, "Attendance recorded successfully"));
   } catch (err) {
     next(err);
   }
@@ -61,7 +66,7 @@ export async function getClassroomAttendance(req: Request, res: Response, next: 
   try {
     const { id } = req.params;
     const sheet = await attendanceService.getClassroomAttendanceSheet(id as string, req.user as AuthUser);
-    res.json(sheet);
+    res.json(apiResponse(sheet, "Classroom attendance sheet retrieved successfully"));
   } catch (err) {
     next(err);
   }
