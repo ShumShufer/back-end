@@ -34,3 +34,5 @@ generated/
 .windsurf/
 # Sample test data (local only, uploaded to Cloudinary in real use)
 sample-data/
+
+uploads/
