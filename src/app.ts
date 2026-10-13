@@ -1,5 +1,6 @@
 import express from "express";
 import type { Express, Request, Response } from "express";
+import path from "path";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -29,6 +30,8 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 app.use("/api/v1", router);
 
