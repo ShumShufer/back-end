@@ -28,3 +28,10 @@ export const createClassroomAnnouncementSchema = z.object({
 export type CreateClassroomAnnouncementInput = z.infer<
   typeof createClassroomAnnouncementSchema
 >;
+
+export const updateAnnouncementSchema = z.object({
+  title: z.string().min(3).max(150).optional(),
+  body: z.string().min(3).max(2000).optional(),
+});
+
+export type UpdateAnnouncementInput = z.infer<typeof updateAnnouncementSchema>;

@@ -35,9 +35,12 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 app.use("/api/v1", router);
 
-app.get("/health", (_req: Request, res: Response) => {
+const healthHandler = (_req: Request, res: Response) => {
   res.status(200).json({ status: "OK", message: "Server is up and running" });
-});
+};
+
+app.get("/health", healthHandler);
+app.get("/api/v1/health", healthHandler);
 
 app.use(notFound);
 app.use(errorHandler);
