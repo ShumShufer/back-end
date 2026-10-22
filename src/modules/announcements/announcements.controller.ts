@@ -84,3 +84,44 @@ export async function broadcastSchoolAnnouncement(
     next(err);
   }
 }
+
+/**
+ * PATCH /announcements/:id
+ */
+export async function updateAnnouncement(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { id } = req.params;
+    const result = await announcementsService.updateAnnouncement(
+      id as string,
+      req.body as { title?: string; body?: string },
+      req.user as AuthUser,
+    );
+    res.json(apiResponse(result, "Announcement updated successfully"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /announcements/:id
+ */
+export async function deleteAnnouncement(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { id } = req.params;
+    const result = await announcementsService.deleteAnnouncement(
+      id as string,
+      req.user as AuthUser,
+    );
+    res.json(apiResponse(result, "Announcement deleted successfully"));
+  } catch (err) {
+    next(err);
+  }
+}
