@@ -64,6 +64,6 @@ The backend includes a built-in scheduler (`src/jobs/scheduler.ts`) that runs:
 ## The Team
 
 - **Zeamanuel Mebit** (ID: CTC-3498-26) - Lead, Code Reviewer
-- **Yonas** (ID: CTC-3303-26 ) - Backend dev
+- **Yonnas Kelem** (ID: CTC-3303-26) - Backend dev
 - **Yeabsra** ( ID: CTC-2878-26 ) - Frontend dev
 - **Yohannes** ( ID: CTC-7823-26 ) - UI/UX designer, frontend dev

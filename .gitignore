@@ -28,6 +28,7 @@ generated/
 /generated/prisma
 
 .agents/
+check_user.ts
 .agent/
 .claude/
 .cursor/
