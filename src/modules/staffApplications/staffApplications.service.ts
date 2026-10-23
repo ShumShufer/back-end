@@ -191,8 +191,21 @@ export async function getStaffApplicationsBySchool(
     prisma.staffApplication.count({ where: whereClause }),
   ]);
 
+  // Fetch applicant user details so the admin sees the applicant's name and contact
+  const applicantIds = [...new Set(applications.map((a) => a.applicantId))];
+  const applicants = await prisma.user.findMany({
+    where: { id: { in: applicantIds } },
+    select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+  });
+  const applicantMap = new Map(applicants.map((u) => [u.id, u]));
+
+  const enrichedApplications = applications.map((app) => ({
+    ...app,
+    applicant: applicantMap.get(app.applicantId) || null,
+  }));
+
   return {
-    applications,
+    applications: enrichedApplications,
     meta: {
       page,
       pageSize,
