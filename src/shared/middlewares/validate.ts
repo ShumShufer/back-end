@@ -12,7 +12,7 @@ export function validate(
     _res: Response,
     next: NextFunction,
   ): void {
-    const requestData = req[source];
+    const requestData = req[source] ?? {};
     const parsed = schema.safeParse(requestData);
 
     if (!parsed.success) {

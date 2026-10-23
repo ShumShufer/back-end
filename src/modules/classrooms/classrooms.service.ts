@@ -286,3 +286,49 @@ export async function getClassroomStudents(classroomId: string) {
 
   return enrollments.map((e) => e.student);
 }
+
+/**
+ * Aggregated feed of latest activity for a classroom (announcements, tasks, resources, upcoming schedules).
+ */
+export async function getClassroomWhatsNew(classroomId: string) {
+  const classroom = await prisma.classroom.findUnique({ where: { id: classroomId } });
+  if (!classroom) throw AppError.notFound("Classroom not found");
+
+  const [announcements, tasks, resources, schedules] = await Promise.all([
+    prisma.announcement.findMany({
+      where: { classroomId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.task.findMany({
+      where: { classroomId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.resource.findMany({
+      where: { classroomId },
+      orderBy: { uploadedAt: "desc" },
+      take: 5,
+    }),
+    prisma.scheduleEvent.findMany({
+      where: {
+        classroomId,
+        startTime: { gte: new Date() },
+      },
+      orderBy: { startTime: "asc" },
+      take: 5,
+    }),
+  ]);
+
+  return {
+    classroom: {
+      id: classroom.id,
+      name: classroom.name,
+    },
+    announcements,
+    tasks,
+    resources,
+    upcomingSchedules: schedules,
+  };
+}
+

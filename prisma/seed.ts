@@ -332,6 +332,7 @@ async function main() {
   interface TopicSeed {
     title: string;
     content: string;
+    videoUrl?: string;
     quiz?: {
       title: string;
       passScore: number;
@@ -357,7 +358,7 @@ async function main() {
     });
     for (const [i, t] of topics.entries()) {
       const topic = await prisma.topic.create({
-        data: { courseId: course.id, title: t.title, order: i + 1, content: t.content },
+        data: { courseId: course.id, title: t.title, order: i + 1, content: t.content, videoUrl: t.videoUrl ?? null },
       });
       if (t.quiz) {
         await prisma.quiz.create({
@@ -381,53 +382,148 @@ async function main() {
   ) => ({ question, options, correctOptionIndex, points });
 
   const courseATh = await createCourse(schoolA.id, 'Traffic Rules & Theory', 'Complete Ethiopian traffic law and road safety theory course.', 3500, [
-    { title: 'Introduction to Traffic Law', content: 'Overview of Ethiopian traffic regulations and the role of the Transport Authority.', quiz: { title: 'Traffic Law Basics Quiz', passScore: 70, questions: [q('What is the legal minimum driving age for a private car in Ethiopia?', ['16', '17', '18', '21'], 2), q('Which authority issues driving licenses in Ethiopia?', ['Ministry of Education', 'Transport Authority', 'Federal Police', 'City Administration'], 1)] } },
-    { title: 'Road Signs & Markings', content: 'Comprehensive guide to regulatory, warning, and informational road signs.', quiz: { title: 'Road Signs Quiz', passScore: 80, questions: [q('A red octagonal sign means?', ['Yield', 'Stop', 'No entry', 'Speed limit'], 1), q('Yellow diamond signs are typically?', ['Regulatory', 'Warning', 'Informational', 'Construction'], 1), q('A round blue sign indicates?', ['Prohibition', 'Mandatory action', 'Information', 'Warning'], 1)] } },
-    { title: 'Right of Way', content: 'Rules governing right of way at intersections, roundabouts, and special zones.' },
-    { title: 'Driving Under Adverse Conditions', content: 'Rain, fog, night driving, and unpaved roads around Addis Ababa.' },
+    {
+      title: 'Introduction to Traffic Law',
+      content: 'Overview of Ethiopian traffic regulations and the role of the Transport Authority. Covers license categories (A, B, C, D, E), registration rules, and the Addis Ababa Traffic Management Agency.',
+      videoUrl: 'https://www.youtube.com/watch?v=8UOs_S2Gi6Q',
+      quiz: { title: 'Traffic Law Basics Quiz', passScore: 70, questions: [q('What is the legal minimum driving age for a private car in Ethiopia?', ['16', '17', '18', '21'], 2), q('Which authority issues driving licenses in Ethiopia?', ['Ministry of Education', 'Transport Authority', 'Federal Police', 'City Administration'], 1)] },
+    },
+    {
+      title: 'Road Signs & Markings',
+      content: 'Comprehensive guide to regulatory, warning, and informational road signs used in Ethiopia. Includes prohibitory signs (red border), mandatory signs (blue circle), and warning signs (yellow diamond).',
+      videoUrl: 'https://www.youtube.com/watch?v=FH3P2s7VBOU',
+      quiz: { title: 'Road Signs Quiz', passScore: 80, questions: [q('A red octagonal sign means?', ['Yield', 'Stop', 'No entry', 'Speed limit'], 1), q('Yellow diamond signs are typically?', ['Regulatory', 'Warning', 'Informational', 'Construction'], 1), q('A round blue sign indicates?', ['Prohibition', 'Mandatory action', 'Information', 'Warning'], 1)] },
+    },
+    {
+      title: 'Right of Way',
+      content: 'Rules governing right of way at intersections, roundabouts, and special zones. Includes priority at uncontrolled junctions, giving way to pedestrians, and emergency vehicles.',
+      videoUrl: 'https://www.youtube.com/watch?v=0Hol2R1STFY',
+    },
+    {
+      title: 'Driving Under Adverse Conditions',
+      content: 'Rain, fog, night driving, and unpaved roads around Addis Ababa. Covers reduced visibility, wet braking distances, and how to handle flooded roads during kiremt season.',
+      videoUrl: 'https://www.youtube.com/watch?v=U3ZR3MVHYSA',
+    },
   ]);
 
   const courseAPr = await createCourse(schoolA.id, 'Practical Driving', 'Behind-the-wheel training covering city driving, parking, and highway.', 8000, [
-    { title: 'Vehicle Controls & Basics', content: 'Familiarization with pedals, steering, mirrors, and dashboard controls.' },
-    { title: 'City Driving Maneuvers', content: 'Lane discipline, turns, U-turns, and negotiating busy intersections.' },
-    { title: 'Parking & Low-Speed Control', content: 'Angle parking, parallel parking, hill starts, and three-point turns.' },
+    {
+      title: 'Vehicle Controls & Basics',
+      content: 'Familiarization with pedals, steering, mirrors, and dashboard controls. Learn the cockpit drill (DSSSM) and pre-drive checks.',
+      videoUrl: 'https://www.youtube.com/watch?v=kPMYBMb0roc',
+    },
+    {
+      title: 'City Driving Maneuvers',
+      content: 'Lane discipline, turns, U-turns, and negotiating busy intersections in Addis Ababa. Covers Meskel Square, roundabouts, and minibus taxi zones.',
+      videoUrl: 'https://www.youtube.com/watch?v=X1rOe0cJLFE',
+    },
+    {
+      title: 'Parking & Low-Speed Control',
+      content: 'Angle parking, parallel parking, hill starts, and three-point turns. Practiced on the AADTMA official test ground.',
+      videoUrl: 'https://www.youtube.com/watch?v=bDFLcxNvs0g',
+    },
   ]);
 
   const courseADef = await createCourse(schoolA.id, 'Defensive Driving', 'Anticipating hazards and managing risk on Ethiopian roads.', 5500, [
-    { title: 'Hazard Perception', content: 'Scanning techniques and following distance management.' },
-    { title: 'Crash Avoidance Techniques', content: 'Emergency braking, skid control, and evasive steering.' },
+    {
+      title: 'Hazard Perception',
+      content: 'Scanning techniques and following distance management. Learn the two-second rule adapted for Ethiopian traffic speeds and road surfaces.',
+      videoUrl: 'https://www.youtube.com/watch?v=0JkLBHdRBvI',
+    },
+    {
+      title: 'Crash Avoidance Techniques',
+      content: 'Emergency braking, skid control, and evasive steering. Includes ABS vs non-ABS vehicles common in the Ethiopian market.',
+      videoUrl: 'https://www.youtube.com/watch?v=8PIVZQ7OQXU',
+    },
   ]);
 
   await createCourse(schoolA.id, 'Road Safety Awareness', 'Free open course — basic road safety tips for pedestrians and drivers.', 0, [
-    { title: 'Pedestrian Safety', content: 'Crossing rules, zebra crossings, and school-zone awareness.' },
-    { title: 'Sharing the Road', content: 'Minibuses, motorcycles, livestock, and vulnerable road users.' },
+    {
+      title: 'Pedestrian Safety',
+      content: 'Crossing rules, zebra crossings, and school-zone awareness. Key statistics from Ethiopia Roads Authority on pedestrian fatalities.',
+      videoUrl: 'https://www.youtube.com/watch?v=GXThWPnQ32c',
+    },
+    {
+      title: 'Sharing the Road',
+      content: 'Minibuses, motorcycles, livestock, and vulnerable road users. How to safely interact with Addis Ababa blue taxis and Bajaj three-wheelers.',
+      videoUrl: 'https://www.youtube.com/watch?v=R4HmGnUCOsY',
+    },
   ], true);
 
   const courseBTh = await createCourse(schoolB.id, 'Bole Theory Program', 'Structured theory program aligned with the national exam.', 3000, [
-    { title: 'Traffic Law Essentials', content: 'Core legal provisions every driver must know.', quiz: { title: 'Essentials Check Quiz', passScore: 70, questions: [q('Driving while using a handheld phone is…', ['Allowed in traffic jams', 'Always prohibited', 'Allowed on highways', 'Allowed with both hands'], 1)] } },
-    { title: 'Vehicle Documents', content: 'Insurance, license classes, and inspection requirements.' },
-    { title: 'Alcohol & Fatigue', content: 'Legal limits and impairment awareness.' },
+    {
+      title: 'Traffic Law Essentials',
+      content: 'Core legal provisions every driver must know. Covers Proclamation No. 468/2005 (Road Traffic) and subsequent amendments.',
+      videoUrl: 'https://www.youtube.com/watch?v=8UOs_S2Gi6Q',
+      quiz: { title: 'Essentials Check Quiz', passScore: 70, questions: [q('Driving while using a handheld phone is…', ['Allowed in traffic jams', 'Always prohibited', 'Allowed on highways', 'Allowed with both hands'], 1)] },
+    },
+    {
+      title: 'Vehicle Documents',
+      content: 'Insurance, license classes, and inspection requirements. Third-party liability insurance is mandatory; annual vehicle roadworthiness inspection at AATA centers.',
+      videoUrl: 'https://www.youtube.com/watch?v=FH3P2s7VBOU',
+    },
+    {
+      title: 'Alcohol & Fatigue',
+      content: 'Legal limits (BAC 0.05%) and impairment awareness. Signs of driver fatigue and mandatory rest periods for commercial drivers.',
+      videoUrl: 'https://www.youtube.com/watch?v=U3ZR3MVHYSA',
+    },
   ]);
 
   const courseBPr = await createCourse(schoolB.id, 'Bole Practical Program', 'Route-based practical training around Bole and Gerji.', 7000, [
-    { title: 'Basic Manuevers', content: 'Starting, stopping, steering, and gear work.' },
-    { title: 'Test Route Practice', content: 'Mock exams on official testing routes.' },
+    {
+      title: 'Basic Maneuvers',
+      content: 'Starting, stopping, steering, and gear work. Manual transmission focus using Toyota Corolla — most common exam vehicle in Addis.',
+      videoUrl: 'https://www.youtube.com/watch?v=kPMYBMb0roc',
+    },
+    {
+      title: 'Test Route Practice',
+      content: 'Mock exams on official Bole testing routes. Includes the standard S-turn, hill start, and parallel parking stations.',
+      videoUrl: 'https://www.youtube.com/watch?v=X1rOe0cJLFE',
+    },
   ]);
 
   const courseCTh = await createCourse(schoolC.id, 'Megenagna Theory Course', 'Light-vehicle theory with weekly mock examinations.', 3200, [
-    { title: 'Signs & Signals', content: 'Traffic lights, officer signals, and signage systems.' },
-    { title: 'Eco Driving', content: 'Fuel-efficient driving habits.' },
-    { title: 'First Aid Basics', content: 'Responding to road accidents safely.' },
+    {
+      title: 'Signs & Signals',
+      content: 'Traffic lights, officer signals, and signage systems. Includes hand signals used by traffic police when lights are out.',
+      videoUrl: 'https://www.youtube.com/watch?v=FH3P2s7VBOU',
+    },
+    {
+      title: 'Eco Driving',
+      content: 'Fuel-efficient driving habits. Smooth acceleration, early gear changes, and engine-off at long stops — reducing fuel costs by up to 20%.',
+      videoUrl: 'https://www.youtube.com/watch?v=0JkLBHdRBvI',
+    },
+    {
+      title: 'First Aid Basics',
+      content: 'Responding to road accidents safely. DR ABC protocol, recovery position, and how to report accidents under Ethiopian law.',
+      videoUrl: 'https://www.youtube.com/watch?v=GXThWPnQ32c',
+    },
   ]);
 
   const courseCMo = await createCourse(schoolC.id, 'Motorcycle Riding Program', 'Two-wheeler control, gear work, and protective equipment.', 4500, [
-    { title: 'Riding Gear & Safety', content: 'Helmets, visibility, and protective clothing.' },
-    { title: 'Low-Speed Balance', content: 'Clutch control and balance drills.' },
+    {
+      title: 'Riding Gear & Safety',
+      content: 'Helmets (mandatory by law), visibility vests, gloves, and protective clothing. Ethiopian standard for helmets and enforcement.',
+      videoUrl: 'https://www.youtube.com/watch?v=R4HmGnUCOsY',
+    },
+    {
+      title: 'Low-Speed Balance',
+      content: 'Clutch control, figure-eight drills, and slow-speed balance. Techniques for navigating Addis Ababa cobblestone areas.',
+      videoUrl: 'https://www.youtube.com/watch?v=bDFLcxNvs0g',
+    },
   ]);
 
   const courseDTh = await createCourse(schoolD.id, 'Ayat Foundation Theory', 'Starter theory program for the founding batch.', 3500, [
-    { title: 'Getting Started', content: 'License categories and the licensing journey.' },
-    { title: 'Basic Traffic Rules', content: 'Fundamental rules of the road.' },
+    {
+      title: 'Getting Started',
+      content: 'License categories (A=motorcycle, B=private car, C=truck, D=bus, E=articulated) and the full licensing journey in Ethiopia from learner permit to full license.',
+      videoUrl: 'https://www.youtube.com/watch?v=8UOs_S2Gi6Q',
+    },
+    {
+      title: 'Basic Traffic Rules',
+      content: 'Fundamental rules of the road: keep right, speed limits (50 km/h city, 100 km/h highway), overtaking, and pedestrian priority.',
+      videoUrl: 'https://www.youtube.com/watch?v=0Hol2R1STFY',
+    },
   ]);
   console.log('  ✓ Created 9 courses with topics & quizzes');
 

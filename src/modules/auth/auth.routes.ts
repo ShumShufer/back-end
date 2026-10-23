@@ -5,6 +5,7 @@ import { authenticate } from "../../shared/middlewares/authenticate.js";
 import { validate } from "../../shared/middlewares/validate.js";
 import {
   registerSchema,
+  registerSchoolRepSchema,
   loginSchema,
   refreshTokenSchema,
   verifyFaydaSchema,
@@ -18,6 +19,11 @@ const router: Router = createRouter();
  * Public routes
  */
 router.post("/register", validate(registerSchema), authController.register);
+router.post(
+  "/register/school-rep",
+  validate(registerSchoolRepSchema),
+  authController.registerSchoolRep,
+);
 
 router.post("/login", validate(loginSchema), authController.login);
 

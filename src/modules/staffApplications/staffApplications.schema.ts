@@ -55,12 +55,15 @@ export const queryStaffPostsSchema = z.object({
  * Schema for submitting a staff application to a post.
  * resumeUrl is optional — applicants may not always have a hosted resume.
  */
-export const submitStaffApplicationSchema = z.object({
-  resumeUrl: z
-    .string()
-    .url("Resume URL must be a valid URL")
-    .optional(),
-});
+export const submitStaffApplicationSchema = z
+  .object({
+    resumeUrl: z
+      .string()
+      .url("Resume URL must be a valid URL")
+      .optional(),
+  })
+  .optional()
+  .default({});
 
 /**
  * Schema for querying the staff applications inbox (ADMIN).

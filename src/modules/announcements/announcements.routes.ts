@@ -29,6 +29,26 @@ router.post(
   announcementsController.broadcastPlatformAnnouncement,
 );
 
+/**
+ * PATCH /announcements/:id — update announcement (SUPER_ADMIN or author)
+ */
+router.patch(
+  "/:id",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN),
+  announcementsController.updateAnnouncement,
+);
+
+/**
+ * DELETE /announcements/:id — delete announcement (SUPER_ADMIN or author)
+ */
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(Role.SUPER_ADMIN, Role.ADMIN),
+  announcementsController.deleteAnnouncement,
+);
+
 // School-scoped router mounted at /schools/:id (mergeParams: true)
 export const schoolAnnouncementsRouter = Router({ mergeParams: true });
 

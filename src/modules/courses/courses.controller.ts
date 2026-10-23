@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as coursesService from "./courses.service.js";
 import * as topicsService from "../topics/topics.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type {
   CreateCourseInput,
@@ -8,6 +9,9 @@ import type {
   QueryCoursesInput,
   CreateTopicInput,
   UpdateTopicInput,
+  AttachCourseInput,
+  ConfigureFinalExamInput,
+  SubmitFinalExamInput,
 } from "./courses.schema.js";
 
 /**
@@ -17,7 +21,7 @@ import type {
 export async function getAllCourses(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await coursesService.getCourses(req.query as unknown as QueryCoursesInput);
-    res.json(result);
+    res.json(apiResponse(result.courses, "Courses retrieved successfully", 200, result.meta));
   } catch (err) {
     next(err);
   }
@@ -31,7 +35,7 @@ export async function getCourseById(req: Request, res: Response, next: NextFunct
   try {
     const { id } = req.params;
     const course = await coursesService.getCourseById(id as string, req.user as AuthUser);
-    res.json(course);
+    res.json(apiResponse(course, "Course details retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -47,7 +51,7 @@ export async function createCourse(req: Request, res: Response, next: NextFuncti
       req.body as CreateCourseInput,
       req.user as AuthUser,
     );
-    res.status(201).json(course);
+    res.status(201).json(apiResponse(course, "Course created successfully", 201));
   } catch (err) {
     next(err);
   }
@@ -65,7 +69,21 @@ export async function updateCourse(req: Request, res: Response, next: NextFuncti
       req.body as UpdateCourseInput,
       req.user as AuthUser,
     );
-    res.json(course);
+    res.json(apiResponse(course, "Course updated successfully"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /courses/:id
+ * Protected — ADMIN, SUPER_ADMIN only.
+ */
+export async function deleteCourse(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const result = await coursesService.deleteCourse(id as string, req.user as AuthUser);
+    res.json(apiResponse(result, "Course deleted successfully"));
   } catch (err) {
     next(err);
   }
@@ -80,7 +98,7 @@ export async function getPriceRecommendation(req: Request, res: Response, next: 
   try {
     const { id } = req.params;
     const recommendation = await coursesService.getPriceRecommendation(id as string);
-    res.json(recommendation);
+    res.json(apiResponse(recommendation, "Price recommendation calculated successfully"));
   } catch (err) {
     next(err);
   }
@@ -97,7 +115,7 @@ export async function getTopics(req: Request, res: Response, next: NextFunction)
       id as string,
       req.user as AuthUser | undefined,
     );
-    res.json(topics);
+    res.json(apiResponse(topics, "Course topics retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -115,7 +133,7 @@ export async function createTopic(req: Request, res: Response, next: NextFunctio
       req.body as CreateTopicInput,
       req.user as AuthUser,
     );
-    res.status(201).json(topic);
+    res.status(201).json(apiResponse(topic, "Topic created successfully", 201));
   } catch (err) {
     next(err);
   }
@@ -133,7 +151,7 @@ export async function updateTopic(req: Request, res: Response, next: NextFunctio
       req.body as UpdateTopicInput,
       req.user as AuthUser,
     );
-    res.json(topic);
+    res.json(apiResponse(topic, "Topic updated successfully"));
   } catch (err) {
     next(err);
   }
@@ -150,7 +168,7 @@ export async function deleteTopic(req: Request, res: Response, next: NextFunctio
       topicId as string,
       req.user as AuthUser,
     );
-    res.json(result);
+    res.json(apiResponse(result, "Topic deleted successfully"));
   } catch (err) {
     next(err);
   }
@@ -168,8 +186,9 @@ export async function publishCourseResult(req: Request, res: Response, next: Nex
       classroomId as string,
       studentId as string,
       finalExamScore ? Number(finalExamScore) : undefined,
+      req.user as AuthUser,
     );
-    res.json(result);
+    res.json(apiResponse(result, "Course result published successfully"));
   } catch (err) {
     next(err);
   }
@@ -185,7 +204,7 @@ export async function getStudentProgress(req: Request, res: Response, next: Next
       id as string,
       req.user as AuthUser,
     );
-    res.json(progress);
+    res.json(apiResponse(progress, "Student progress retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -197,7 +216,7 @@ export async function getStudentProgress(req: Request, res: Response, next: Next
 export async function getRecommendedCourses(req: Request, res: Response, next: NextFunction) {
   try {
     const courses = await coursesService.getRecommendedCourses(req.user as AuthUser);
-    res.json(courses);
+    res.json(apiResponse(courses, "Recommended courses retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -210,7 +229,58 @@ export async function getClassroomCourses(req: Request, res: Response, next: Nex
   try {
     const { id } = req.params;
     const links = await coursesService.getClassroomCourses(id as string);
-    res.json(links);
+    res.json(apiResponse(links, "Classroom courses retrieved successfully"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /classrooms/:id/courses — attach course to classroom
+ */
+export async function attachCourseToClassroom(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const link = await coursesService.attachCourseToClassroom(
+      id as string,
+      req.body as AttachCourseInput,
+      req.user as AuthUser,
+    );
+    res.status(201).json(apiResponse(link, "Course attached to classroom successfully", 201));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /courses/:id/final-exam — configure final exam
+ */
+export async function configureFinalExam(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const exam = await coursesService.configureFinalExam(
+      id as string,
+      req.body as ConfigureFinalExamInput,
+      req.user as AuthUser,
+    );
+    res.status(201).json(apiResponse(exam, "Final exam configured successfully", 201));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /courses/:id/final-exam/submit — submit final exam
+ */
+export async function submitFinalExam(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const result = await coursesService.submitFinalExam(
+      id as string,
+      req.body as SubmitFinalExamInput,
+      req.user as AuthUser,
+    );
+    res.json(apiResponse(result, "Final exam submitted and evaluated successfully"));
   } catch (err) {
     next(err);
   }

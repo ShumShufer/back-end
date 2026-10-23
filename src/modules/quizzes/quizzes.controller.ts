@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as quizzesService from "./quizzes.service.js";
+import { apiResponse } from "../../shared/helpers/apiResponse.js";
 import type { AuthUser } from "../../shared/types/auth.types.js";
 import type {
   CreateQuizInput,
@@ -14,7 +15,7 @@ export async function getQuizzes(req: Request, res: Response, next: NextFunction
   try {
     const topicId = req.query.topicId as string | undefined;
     const quizzes = await quizzesService.getQuizzes(topicId);
-    res.json(quizzes);
+    res.json(apiResponse(quizzes, "Quizzes retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -27,7 +28,7 @@ export async function getQuizById(req: Request, res: Response, next: NextFunctio
   try {
     const { id } = req.params;
     const quiz = await quizzesService.getQuizById(id as string, req.user as AuthUser);
-    res.json(quiz);
+    res.json(apiResponse(quiz, "Quiz retrieved successfully"));
   } catch (err) {
     next(err);
   }
@@ -42,7 +43,7 @@ export async function createQuiz(req: Request, res: Response, next: NextFunction
       req.body as CreateQuizInput,
       req.user as AuthUser,
     );
-    res.status(201).json(quiz);
+    res.status(201).json(apiResponse(quiz, "Quiz created successfully", 201));
   } catch (err) {
     next(err);
   }
@@ -59,7 +60,7 @@ export async function updateQuiz(req: Request, res: Response, next: NextFunction
       req.body as UpdateQuizInput,
       req.user as AuthUser,
     );
-    res.json(quiz);
+    res.json(apiResponse(quiz, "Quiz updated successfully"));
   } catch (err) {
     next(err);
   }
@@ -75,7 +76,24 @@ export async function submitQuiz(req: Request, res: Response, next: NextFunction
       id as string,
       req.body as SubmitQuizInput,
     );
-    res.json(result);
+    res.json(apiResponse(result, "Quiz evaluated successfully"));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /topics/:id/quiz
+ */
+export async function createOrReplaceTopicQuiz(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const quiz = await quizzesService.createOrReplaceTopicQuiz(
+      id as string,
+      req.body as CreateQuizInput,
+      req.user as AuthUser,
+    );
+    res.status(201).json(apiResponse(quiz, "Topic quiz configured successfully", 201));
   } catch (err) {
     next(err);
   }

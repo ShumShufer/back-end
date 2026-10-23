@@ -13,7 +13,7 @@ export const createSchoolSchema = z.object({
     .string()
     .min(2, "School name must be at least 2 characters")
     .max(100, "School name must not exceed 100 characters"),
-  description: z.string().max(1000, "Description too long").optional(),
+  description: z.string().max(1000, "Description too long").optional().nullable(),
 });
 
 /**
@@ -25,7 +25,8 @@ export const updateSchoolSchema = z.object({
     .min(2, "School name must be at least 2 characters")
     .max(100, "School name must not exceed 100 characters")
     .optional(),
-  description: z.string().max(1000, "Description too long").optional(),
+  description: z.string().max(1000, "Description too long").optional().nullable(),
+  status: z.enum(["ACTIVE", "SUSPENDED", "PENDING_APPROVAL"]).optional(),
 });
 
 /**

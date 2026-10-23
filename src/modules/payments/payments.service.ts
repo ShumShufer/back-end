@@ -201,3 +201,30 @@ export async function getPaymentById(id: string, actor: AuthUser) {
 
   return payment;
 }
+
+/**
+ * Get payment history for a specific user (Self, SUPER_ADMIN).
+ */
+export async function getUserPayments(userId: string, actor: AuthUser, page = 1, limit = 20) {
+  if (actor.role !== Role.SUPER_ADMIN && actor.id !== userId) {
+    throw AppError.forbidden("You can only view your own payment history");
+  }
+
+  const skip = (page - 1) * limit;
+  const where = { userId };
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.payment.count({ where }),
+  ]);
+
+  return {
+    payments,
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+  };
+}

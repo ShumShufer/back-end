@@ -28,7 +28,12 @@ generated/
 /generated/prisma
 
 .agents/
+check_user.ts
 .agent/
 .claude/
 .cursor/
 .windsurf/
+# Sample test data (local only, uploaded to Cloudinary in real use)
+sample-data/
+
+uploads/

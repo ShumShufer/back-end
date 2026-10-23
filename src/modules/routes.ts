@@ -10,7 +10,8 @@ import staffPostsRoutes, {
   schoolStaffRouter,
 } from "./staffApplications/staffApplications.routes.js";
 import coursesRoutes from "./courses/courses.routes.js";
-import tasksRoutes from "./tasks/tasks.routes.js";
+import topicsRoutes from "./topics/topics.routes.js";
+import tasksRoutes, { classroomTasksRouter } from "./tasks/tasks.routes.js";
 import submissionsRoutes from "./submissions/submissions.routes.js";
 import quizzesRoutes from "./quizzes/quizzes.routes.js";
 import uploadsRoutes from "./uploads/uploads.routes.js";
@@ -83,6 +84,7 @@ router.use("/classrooms/:id", classroomStudentsRouter);
 router.use("/classrooms/:id", classroomAttendanceRouter);
 router.use("/classrooms/:id", classroomAnnouncementsRouter);
 router.use("/classrooms/:id", classroomCoursesRouter);
+router.use("/classrooms/:id", classroomTasksRouter);
 router.use("/students", studentsRoutes);
 router.use("/stats", statsRoutes);
 
@@ -93,6 +95,7 @@ router.use("/stats", statsRoutes);
  * GET /courses/:id/price-recommendation
  */
 router.use("/courses", coursesRoutes);
+router.use("/topics", topicsRoutes);
 
 /**
  * Tasks — assignment/quiz/exam creation, listing, deadline enforcement

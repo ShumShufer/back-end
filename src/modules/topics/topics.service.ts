@@ -47,6 +47,22 @@ export async function getTopicsByCourseId(courseId: string, requestingUser?: Aut
 }
 
 /**
+ * Get single topic by ID, including attached quizzes and resources.
+ */
+export async function getTopicById(topicId: string, _requestingUser?: AuthUser) {
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    include: {
+      course: { select: { id: true, schoolId: true, isFree: true } },
+      quizzes: true,
+      resources: true,
+    },
+  });
+  if (!topic) throw AppError.notFound("Topic not found");
+  return topic;
+}
+
+/**
  * Create a topic for a course.
  * Enforces ordering: the `order` value must be exactly `maxOrder + 1` to
  * keep topics sequential and prevent gaps or duplicates.
