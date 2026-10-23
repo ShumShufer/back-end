@@ -136,6 +136,24 @@ export function getStaffApplicationsBySchool(
 }
 
 /**
+ * Get all staff applications for the currently authenticated user (mentor self-view)
+ * GET /staff-applications
+ */
+export function getMyStaffApplications(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  return (async () => {
+    const applicantId = req.user!.id;
+    const result = await staffApplicationsService.getMyStaffApplications(applicantId);
+    res
+      .status(200)
+      .json(apiResponse(result, "Your staff applications retrieved successfully", 200));
+  })().catch(next);
+}
+
+/**
  * Submit an application to a staff post (any authenticated user)
  * POST /staff-posts/:id/apply
  */

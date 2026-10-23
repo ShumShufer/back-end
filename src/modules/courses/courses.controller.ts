@@ -186,6 +186,7 @@ export async function publishCourseResult(req: Request, res: Response, next: Nex
       classroomId as string,
       studentId as string,
       finalExamScore ? Number(finalExamScore) : undefined,
+      req.user as AuthUser,
     );
     res.json(apiResponse(result, "Course result published successfully"));
   } catch (err) {

@@ -203,6 +203,21 @@ export async function getStaffApplicationsBySchool(
 }
 
 /**
+ * Get all staff applications submitted by a specific applicant (mentor self-query).
+ */
+export async function getMyStaffApplications(applicantId: string) {
+  return prisma.staffApplication.findMany({
+    where: { applicantId },
+    orderBy: { submittedAt: "desc" },
+    include: {
+      post: {
+        select: { id: true, role: true, description: true, schoolId: true },
+      },
+    },
+  });
+}
+
+/**
  * Submit an application to a staff post (any authenticated user).
  * Prevents duplicate applications to the same post.
  */

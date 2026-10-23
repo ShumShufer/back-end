@@ -56,6 +56,13 @@ export default router;
  */
 export const staffApplicationActionsRouter = Router();
 
+// GET /staff-applications — authenticated user views their own submitted applications (mentor use case)
+staffApplicationActionsRouter.get(
+  "/",
+  authenticate,
+  staffApplicationsController.getMyStaffApplications,
+);
+
 // PATCH /staff-applications/:id/accept — ADMIN accepts; promotes applicant's role
 staffApplicationActionsRouter.patch(
   "/:id/accept",

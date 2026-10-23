@@ -129,7 +129,7 @@ router.delete(
 router.post(
   "/:courseId/publish-result",
   authenticate,
-  authorize(Role.ADMIN, Role.EDUCATION_HEAD, Role.MENTOR, Role.SUPER_ADMIN),
+  authorize(Role.ADMIN, Role.EDUCATION_HEAD, Role.MENTOR, Role.SUPER_ADMIN, Role.STUDENT),
   coursesController.publishCourseResult,
 );
 
