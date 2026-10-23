@@ -36,7 +36,6 @@ export interface ChapaVerifyResponse {
 
 const CHAPA_API_URL = process.env.CHAPA_API_URL || "https://api.chapa.co/v1";
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY || "CHASECK_TEST-mock";
-const CHAPA_WEBHOOK_SECRET = process.env.CHAPA_WEBHOOK_SECRET || "chapa_secret";
 
 /**
  * Initialize payment with Chapa Gateway.
@@ -104,10 +103,10 @@ export async function verifyTransaction(txRef: string): Promise<boolean> {
  */
 export function verifyWebhookSignature(signature: string | undefined, rawBody: string): boolean {
   if (!signature) return false;
-  if (CHAPA_WEBHOOK_SECRET === "chapa_secret") return true; // dev fallback
+  const secret = process.env.CHAPA_WEBHOOK_SECRET || "chapa_secret";
 
   const expectedHash = crypto
-    .createHmac("sha256", CHAPA_WEBHOOK_SECRET)
+    .createHmac("sha256", secret)
     .update(rawBody)
     .digest("hex");
 

@@ -81,9 +81,22 @@ export async function updateAgreementStatus(
 
   if (!agreement) throw AppError.notFound("Agreement not found");
 
-  // Only the receiving partner school (schoolB) or SUPER_ADMIN can accept/reject
-  if (actor.role === Role.ADMIN && agreement.schoolBId !== actor.schoolId) {
-    throw AppError.forbidden("Only the recipient partner school can accept or reject this agreement");
+  // Check role and school ownership
+  if (actor.role === Role.ADMIN) {
+    const isParty = agreement.schoolAId === actor.schoolId || agreement.schoolBId === actor.schoolId;
+    if (!isParty) {
+      throw AppError.forbidden("You can only manage agreements for your own school");
+    }
+
+    // Only the receiving partner school (schoolB) can accept or decline a pending proposal
+    if (
+      agreement.status === "PENDING" &&
+      (input.status === "ACCEPTED" || input.status === "ACTIVE" || input.status === "REJECTED")
+    ) {
+      if (agreement.schoolBId !== actor.schoolId) {
+        throw AppError.forbidden("Only the recipient partner school can accept or decline this agreement proposal");
+      }
+    }
   }
 
   return prisma.schoolAgreement.update({
@@ -107,7 +120,7 @@ export async function createPracticeRequest(input: CreatePracticeRequestInput, a
   // Check that an active agreement exists between the home and host schools
   const agreement = await prisma.schoolAgreement.findFirst({
     where: {
-      status: "ACCEPTED",
+      status: { in: ["ACCEPTED", "ACTIVE"] },
       OR: [
         { schoolAId: input.homeSchoolId, schoolBId: input.hostSchoolId },
         { schoolAId: input.hostSchoolId, schoolBId: input.homeSchoolId },

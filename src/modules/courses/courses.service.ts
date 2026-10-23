@@ -222,6 +222,7 @@ export async function publishCourseResult(
   classroomId: string,
   studentId: string,
   finalExamScore?: number,
+  actor?: AuthUser,
 ) {
   const isPassed = (finalExamScore ?? 0) >= 50;
   const status = isPassed ? "PASSED" : "FAILED";
@@ -229,6 +230,17 @@ export async function publishCourseResult(
   const existing = await prisma.courseResult.findFirst({
     where: { studentId, courseId, classroomId },
   });
+
+  if (actor?.role === Role.STUDENT) {
+    if (actor.id !== studentId) {
+      throw AppError.forbidden("You can only submit exams for yourself");
+    }
+    if (existing && existing.finalExamScore !== null) {
+      throw AppError.badRequest(
+        "You have already completed this exam. Examinations are strictly one-time assessments and cannot be retaken or re-edited.",
+      );
+    }
+  }
 
   if (existing) {
     return prisma.courseResult.update({
@@ -510,6 +522,7 @@ export async function submitFinalExam(
     input.classroomId,
     actor.id,
     finalExamScore,
+    actor,
   );
 
   return {

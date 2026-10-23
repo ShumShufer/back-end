@@ -31,18 +31,35 @@ The backend is built using a strict layered architecture:
    ```bash
    cp .env.example .env
    ```
-4. **Database Setup**:
+4. **Database Setup & Seed**:
    Ensure your local PostgreSQL service is running and your `.env` is configured with the correct `DATABASE_URL`.
-   Then, apply Prisma migrations and generate the Prisma client:
+   Then, apply Prisma migrations, generate the Prisma client, and seed the demo data:
    ```bash
    npx prisma generate
    npx prisma migrate dev
+   npm run prisma:seed
    ```
-5. **Run the Application**:
+5. **Run Tests**:
+   Run the automated test suite (15/15 passing tests):
+   ```bash
+   npm test
+   ```
+6. **Run the Application**:
    For development (with hot-reload):
    ```bash
    npm run dev
    ```
+   For production:
+   ```bash
+   npm run build
+   npm start
+   ```
+
+### Automated Background Workers
+The backend includes a built-in scheduler (`src/jobs/scheduler.ts`) that runs:
+- `ScheduleReminderJob`: Sends upcoming class reminders to students & mentors (every 1 hour).
+- `ApplicationDeadlineJob`: Alerts school admins about stale pending applications (every 6 hours).
+- `PriceRecalculationJob`: Periodically updates course pricing statistics across schools (every 12 hours).
 
 ## The Team
 
