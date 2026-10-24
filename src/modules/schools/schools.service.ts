@@ -123,6 +123,7 @@ export async function updateSchool(schoolId: string, data: UpdateSchoolInput) {
     data: {
       ...(data.name && { name: data.name }),
       ...(data.description !== undefined && { description: data.description ?? null }),
+      ...(data.status && { status: data.status }),
     },
   });
 

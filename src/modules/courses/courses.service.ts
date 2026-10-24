@@ -1,10 +1,14 @@
 import prisma from "../../shared/config/db.js";
 import { AppError } from "../../shared/helpers/appError.js";
+import { calculatePriceRecommendation } from "../../shared/helpers/priceRecommendation.js";
 import { Role, type AuthUser } from "../../shared/types/auth.types.js";
 import type {
   CreateCourseInput,
   UpdateCourseInput,
   QueryCoursesInput,
+  AttachCourseInput,
+  ConfigureFinalExamInput,
+  SubmitFinalExamInput,
 } from "./courses.schema.js";
 
 /**
@@ -180,6 +184,25 @@ export async function updateCourse(
 }
 
 /**
+ * Delete a course and its links.
+ * ADMIN(own school) or SUPER_ADMIN.
+ */
+export async function deleteCourse(id: string, actor: AuthUser) {
+  const course = await prisma.course.findUnique({ where: { id } });
+  if (!course) throw AppError.notFound("Course not found");
+
+  if (actor.role === Role.ADMIN && course.schoolId && course.schoolId !== actor.schoolId) {
+    throw AppError.forbidden("You can only delete courses belonging to your school");
+  }
+
+  await prisma.classroomCourse.deleteMany({ where: { courseId: id } });
+  await prisma.topic.deleteMany({ where: { courseId: id } });
+  await prisma.course.delete({ where: { id } });
+
+  return { message: "Course deleted successfully" };
+}
+
+/**
  * AI Price Recommendation
  *
  * Calculates a suggested price for a course by analyzing the pricing
@@ -188,49 +211,7 @@ export async function updateCourse(
  * and a confidence band (± one standard deviation).
  */
 export async function getPriceRecommendation(courseId: string) {
-  const course = await prisma.course.findUnique({ where: { id: courseId } });
-  if (!course) throw AppError.notFound("Course not found");
-
-  // Fetch all non-free course prices in the same scope (school or global)
-  const comparableCourses = await prisma.course.findMany({
-    where: {
-      isFree: false,
-      id: { not: courseId },
-      ...(course.schoolId ? { schoolId: course.schoolId } : {}),
-    },
-    select: { price: true },
-  });
-
-  if (comparableCourses.length === 0) {
-    return {
-      recommendedPrice: Number(course.price) || 500,
-      marketAverage: null,
-      lowerBound: null,
-      upperBound: null,
-      confidence: "low",
-      note: "Not enough market data. Recommendation is based on a platform default.",
-    };
-  }
-
-  const prices = comparableCourses.map((c) => Number(c.price));
-  const mean = prices.reduce((sum, p) => sum + p, 0) / prices.length;
-
-  // Standard deviation
-  const variance = prices.reduce((sum, p) => sum + Math.pow(p - mean, 2), 0) / prices.length;
-  const stdDev = Math.sqrt(variance);
-
-  // Recommended price: mean + 5% premium to position the course competitively
-  const recommendedPrice = Math.round(mean * 1.05);
-
-  return {
-    recommendedPrice,
-    marketAverage: Math.round(mean),
-    lowerBound: Math.round(Math.max(0, mean - stdDev)),
-    upperBound: Math.round(mean + stdDev),
-    confidence: comparableCourses.length >= 5 ? "high" : "medium",
-    sampleSize: comparableCourses.length,
-    note: "Price is recommended based on the average of comparable courses in the same school, with a 5% competitive premium.",
-  };
+  return calculatePriceRecommendation(courseId);
 }
 
 /**
@@ -241,6 +222,7 @@ export async function publishCourseResult(
   classroomId: string,
   studentId: string,
   finalExamScore?: number,
+  actor?: AuthUser,
 ) {
   const isPassed = (finalExamScore ?? 0) >= 50;
   const status = isPassed ? "PASSED" : "FAILED";
@@ -248,6 +230,17 @@ export async function publishCourseResult(
   const existing = await prisma.courseResult.findFirst({
     where: { studentId, courseId, classroomId },
   });
+
+  if (actor?.role === Role.STUDENT) {
+    if (actor.id !== studentId) {
+      throw AppError.forbidden("You can only submit exams for yourself");
+    }
+    if (existing && existing.finalExamScore !== null) {
+      throw AppError.badRequest(
+        "You have already completed this exam. Examinations are strictly one-time assessments and cannot be retaken or re-edited.",
+      );
+    }
+  }
 
   if (existing) {
     return prisma.courseResult.update({
@@ -393,4 +386,152 @@ export async function getClassroomCourses(classroomId: string) {
     order: link.order,
     mandatory: link.mandatory,
   }));
+}
+
+/**
+ * Attach course to classroom with order and mandatory flag.
+ */
+export async function attachCourseToClassroom(
+  classroomId: string,
+  input: AttachCourseInput,
+  actor: AuthUser,
+) {
+  const classroom = await prisma.classroom.findUnique({ where: { id: classroomId } });
+  if (!classroom) throw AppError.notFound("Classroom not found");
+
+  if (actor.role !== Role.SUPER_ADMIN && actor.schoolId && classroom.schoolId !== actor.schoolId) {
+    throw AppError.forbidden("Cannot attach course to a classroom of another school");
+  }
+
+  const course = await prisma.course.findUnique({ where: { id: input.courseId } });
+  if (!course) throw AppError.notFound("Course not found");
+
+  const existingCount = await prisma.classroomCourse.count({ where: { classroomId } });
+  const order = input.order ?? existingCount + 1;
+  const mandatory = input.mandatory ?? true;
+
+  return prisma.classroomCourse.upsert({
+    where: { classroomId_courseId: { classroomId, courseId: input.courseId } },
+    update: { order, mandatory },
+    create: { classroomId, courseId: input.courseId, order, mandatory },
+    include: { course: true },
+  });
+}
+
+/**
+ * Configure final exam for a course (Mentor, Education Head, Admin).
+ */
+export async function configureFinalExam(
+  courseId: string,
+  input: ConfigureFinalExamInput,
+  actor: AuthUser,
+) {
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) throw AppError.notFound("Course not found");
+
+  if (actor.role === Role.ADMIN && course.schoolId && course.schoolId !== actor.schoolId) {
+    throw AppError.forbidden("You can only configure final exams for your school's courses");
+  }
+
+  const examKey = `[COURSE_EXAM:${courseId}]`;
+  const existingExam = await prisma.quiz.findFirst({
+    where: { title: { startsWith: examKey } },
+  });
+
+  const fullTitle = `${examKey} ${input.title}`;
+
+  if (existingExam) {
+    return prisma.quiz.update({
+      where: { id: existingExam.id },
+      data: {
+        title: fullTitle,
+        questions: input.questions,
+        passScore: input.passScore,
+      },
+    });
+  }
+
+  return prisma.quiz.create({
+    data: {
+      title: fullTitle,
+      questions: input.questions,
+      passScore: input.passScore,
+    },
+  });
+}
+
+/**
+ * Submit final exam attempt (Student).
+ * Evaluates responses against questions, records score, and publishes CourseResult.
+ */
+export async function submitFinalExam(
+  courseId: string,
+  input: SubmitFinalExamInput,
+  actor: AuthUser,
+) {
+  if (actor.role !== Role.STUDENT) {
+    throw AppError.forbidden("Only students can submit final exams");
+  }
+
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) throw AppError.notFound("Course not found");
+
+  // Verify enrollment in classroom
+  const enrollment = await prisma.enrollment.findFirst({
+    where: {
+      studentId: actor.id,
+      classroomId: input.classroomId,
+      status: "ACCEPTED",
+    },
+  });
+  if (!enrollment) {
+    throw AppError.forbidden("You are not enrolled in this classroom");
+  }
+
+  const examKey = `[COURSE_EXAM:${courseId}]`;
+  const exam = await prisma.quiz.findFirst({
+    where: { title: { startsWith: examKey } },
+  });
+  if (!exam) throw AppError.notFound("No final exam configured for this course");
+
+  interface ExamQuestion {
+    question: string;
+    options: string[];
+    correctOptionIndex: number;
+    points?: number;
+  }
+
+  const questions = exam.questions as unknown as ExamQuestion[];
+  let totalPoints = 0;
+  let earnedPoints = 0;
+
+  questions.forEach((q, idx) => {
+    const points = q.points ?? 1;
+    totalPoints += points;
+    const ans = input.answers.find((a) => a.questionIndex === idx);
+    if (ans && ans.selectedOptionIndex === q.correctOptionIndex) {
+      earnedPoints += points;
+    }
+  });
+
+  const finalExamScore = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+  const passed = finalExamScore >= exam.passScore;
+
+  const result = await publishCourseResult(
+    courseId,
+    input.classroomId,
+    actor.id,
+    finalExamScore,
+    actor,
+  );
+
+  return {
+    courseId,
+    classroomId: input.classroomId,
+    studentId: actor.id,
+    finalExamScore,
+    passScore: exam.passScore,
+    passed,
+    courseResult: result,
+  };
 }

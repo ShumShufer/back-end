@@ -1,6 +1,7 @@
 import app from './app.js';
 import prisma from "./shared/config/db.js";
 import { envConfig } from "./shared/config/envConfig.js";
+import { startBackgroundJobs, stopBackgroundJobs } from "./jobs/scheduler.js";
 
 async function startServer() {
   try {
@@ -9,11 +10,13 @@ async function startServer() {
 
     const server = app.listen(envConfig.PORT, () => {
       console.log(`Server is running in ${envConfig.NODE_ENV} mode on port ${envConfig.PORT}`);
+      startBackgroundJobs();
     });
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
       console.log('SIGTERM signal received: closing HTTP server');
+      stopBackgroundJobs();
       server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);
@@ -22,6 +25,7 @@ async function startServer() {
 
     process.on('SIGINT', () => {
       console.log('SIGINT signal received: closing HTTP server');
+      stopBackgroundJobs();
       server.close(() => {
         console.log('HTTP server closed');
         process.exit(0);

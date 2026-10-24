@@ -9,6 +9,9 @@ import {
   createTopicSchema,
   updateTopicSchema,
   queryCoursesSchema,
+  attachCourseSchema,
+  configureFinalExamSchema,
+  submitFinalExamSchema,
 } from "./courses.schema.js";
 import { Role } from "../../shared/types/auth.types.js";
 
@@ -53,11 +56,40 @@ router.patch(
   coursesController.updateCourse,
 );
 
-// GET /courses/:id/price-recommendation — AI price suggestion (open to students & staff)
+// DELETE /courses/:id — delete a course
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(Role.ADMIN, Role.SUPER_ADMIN),
+  coursesController.deleteCourse,
+);
+
+// GET /courses/:id/price-recommendation — AI price suggestion
 router.get(
   "/:id/price-recommendation",
   authenticate,
   coursesController.getPriceRecommendation,
+);
+
+/**
+ * Final Exam configuration and submission
+ */
+// POST /courses/:id/final-exam — configure course final exam
+router.post(
+  "/:id/final-exam",
+  authenticate,
+  authorize(Role.MENTOR, Role.EDUCATION_HEAD, Role.ADMIN, Role.SUPER_ADMIN),
+  validate(configureFinalExamSchema),
+  coursesController.configureFinalExam,
+);
+
+// POST /courses/:id/final-exam/submit — student submits final exam attempt
+router.post(
+  "/:id/final-exam/submit",
+  authenticate,
+  authorize(Role.STUDENT),
+  validate(submitFinalExamSchema),
+  coursesController.submitFinalExam,
 );
 
 /**
@@ -97,7 +129,7 @@ router.delete(
 router.post(
   "/:courseId/publish-result",
   authenticate,
-  authorize(Role.ADMIN, Role.EDUCATION_HEAD, Role.MENTOR, Role.SUPER_ADMIN),
+  authorize(Role.ADMIN, Role.EDUCATION_HEAD, Role.MENTOR, Role.SUPER_ADMIN, Role.STUDENT),
   coursesController.publishCourseResult,
 );
 
@@ -113,4 +145,15 @@ classroomCoursesRouter.get(
   "/courses",
   authenticate,
   coursesController.getClassroomCourses,
+);
+
+/**
+ * POST /classrooms/:id/courses — attach course to classroom
+ */
+classroomCoursesRouter.post(
+  "/courses",
+  authenticate,
+  authorize(Role.MENTOR, Role.EDUCATION_HEAD, Role.ADMIN, Role.SUPER_ADMIN),
+  validate(attachCourseSchema),
+  coursesController.attachCourseToClassroom,
 );

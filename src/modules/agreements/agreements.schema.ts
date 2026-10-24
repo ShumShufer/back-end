@@ -11,7 +11,7 @@ export const createAgreementSchema = z.object({
 });
 
 export const updateAgreementStatusSchema = z.object({
-  status: z.enum(["ACCEPTED", "REJECTED"]),
+  status: z.enum(["ACCEPTED", "REJECTED", "ACTIVE", "TERMINATED"]),
 });
 
 export const createPracticeRequestSchema = z.object({
@@ -21,7 +21,7 @@ export const createPracticeRequestSchema = z.object({
 });
 
 export const updatePracticeRequestStatusSchema = z.object({
-  status: z.enum(["ACCEPTED", "REJECTED"]),
+  status: z.enum(["ACCEPTED", "REJECTED", "APPROVED"]),
 });
 
 export type CreateAgreementInput = z.infer<typeof createAgreementSchema>;

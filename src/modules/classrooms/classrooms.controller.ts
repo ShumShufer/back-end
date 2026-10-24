@@ -145,3 +145,17 @@ export async function getClassroomStudents(req: Request, res: Response, next: Ne
     next(err);
   }
 }
+
+/**
+ * GET /classrooms/:id/whats-new — aggregated feed of recent classroom events
+ */
+export async function getClassroomWhatsNew(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+    const feed = await classroomsService.getClassroomWhatsNew(id as string);
+    res.json(apiResponse(feed, "Classroom activity feed retrieved"));
+  } catch (err) {
+    next(err);
+  }
+}
+

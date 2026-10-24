@@ -81,6 +81,59 @@ export async function createQuiz(input: CreateQuizInput, actor: AuthUser) {
 }
 
 /**
+ * Create or replace a quiz for a specific topic (Mentor, Education Head, Admin).
+ */
+export async function createOrReplaceTopicQuiz(
+  topicId: string,
+  input: Omit<CreateQuizInput, "topicId">,
+  actor: AuthUser,
+) {
+  if (actor.role === Role.STUDENT) {
+    throw AppError.forbidden("Students cannot create or replace quizzes");
+  }
+
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    include: { course: true },
+  });
+  if (!topic) throw AppError.notFound("Topic not found");
+
+  if (actor.role === Role.ADMIN && topic.course.schoolId && topic.course.schoolId !== actor.schoolId) {
+    throw AppError.forbidden("You can only manage quizzes for your own school's courses");
+  }
+
+  const existingQuiz = await prisma.quiz.findFirst({
+    where: { topicId },
+  });
+
+  if (existingQuiz) {
+    return prisma.quiz.update({
+      where: { id: existingQuiz.id },
+      data: {
+        title: input.title,
+        questions: input.questions,
+        passScore: input.passScore,
+      },
+      include: {
+        topic: { select: { id: true, title: true } },
+      },
+    });
+  }
+
+  return prisma.quiz.create({
+    data: {
+      topicId,
+      title: input.title,
+      questions: input.questions,
+      passScore: input.passScore,
+    },
+    include: {
+      topic: { select: { id: true, title: true } },
+    },
+  });
+}
+
+/**
  * Update quiz.
  */
 export async function updateQuiz(quizId: string, input: UpdateQuizInput, actor: AuthUser) {
