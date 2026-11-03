@@ -8,6 +8,42 @@ A full-stack, enterprise-grade driving school management and digital learning pl
 
 ---
 
+## 📌 Project Submission Overview
+
+> **Mentor & Evaluator Notice:** This section provides direct links and details satisfying all CTC submission requirements.
+
+### 1. 🔗 GitHub Repository Links & Live Demo
+- **GitHub Organization**: [https://github.com/ShumShufer](https://github.com/ShumShufer)
+- **Frontend Repository**: [https://github.com/ShumShufer/front-end](https://github.com/ShumShufer/front-end)
+- **Backend Repository**: [https://github.com/ShumShufer/back-end](https://github.com/ShumShufer/back-end)
+- **Live Deployed App**: [https://shumshufer-frontend.onrender.com/](https://shumshufer-frontend.onrender.com/)
+
+### 2. 🎥 Video Presentation
+- **Video Link**: [Watch Video Presentation on Google Drive](https://drive.google.com/file/d/1Xl9a9FJfkaYc-vbjFU5wXvKRdmVh7lBm/view?usp=sharing)
+- **Voiceover & Walkthrough Script**: System Overview Script with complete role walkthroughs.
+
+### 3. 📖 Project Information
+- **Project Title**: **ShumShufer (ሹም ሹፌር)**
+- **Purpose**: Modernize and streamline the Ethiopian driving school ecosystem by replacing fragmented, pen-and-paper school workflows with an all-in-one digital platform.
+- **Key Modules & Features**:
+  - **Fayda National ID Integration**: Automated biometric/QR identity verification ensuring valid, verified student registration.
+  - **Chapa Payment Gateway**: Seamless tuition and course fee settlements with cryptographic webhook auditing.
+  - **5 Role-Based Workspaces**: Tailored workflows for **Super Admin**, **School Admin**, **Education Head**, **Mentor**, and **Student**.
+  - **Digital Learning & Quizzes**: Structured theory modules, daily chapter practice quizzes, task submissions, and automated grading.
+  - **Hierarchical Scheduling**: Lock-out priority conflict resolution for vehicles, instructors, and theory classrooms.
+  - **Cross-School Practice Agreements**: Inter-school agreements allowing students to complete practical driving sessions in different branches/locations.
+
+### 4. 👥 Team Information
+
+| Full Name | CTC ID | Role / Contribution |
+|---|---|---|
+| **Zeamanuel Mebit** | `CTC-3498-26` | Team Lead, System Architecture & Code Review |
+| **Yonnas Kelem** | `CTC-3303-26` | Backend Developer (APIs, Prisma, Security & Scheduling) |
+| **Yeabsira Mezgebu** | `CTC-2878-26` | Frontend Developer (Workspaces, Services & Responsive Layouts) |
+| **Yohannes Belete** | `CTC-7823-26` | UI/UX Designer & Frontend Developer |
+
+---
+
 ## 🚀 Quick Start (Production via Docker Compose)
 
 The entire platform (PostgreSQL database, Express TypeScript API, and Nginx-powered React SPA) can be launched with a single command:
